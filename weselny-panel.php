@@ -10,15 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-/**
- * Załadowanie funkcji panelu klienta
- */
 require_once plugin_dir_path(__FILE__) . 'panel-klienta.php';
+require_once plugin_dir_path(__FILE__) . 'panel-gosci.php';
 
 
 /**
  * Rejestracja CPT Wesela
  */
+
 function wp_weselny_panel_register_cpt() {
 
     register_post_type( 'wesela', array(
@@ -26,19 +25,25 @@ function wp_weselny_panel_register_cpt() {
             'name' => 'Wesela',
             'singular_name' => 'Wesele',
         ),
-        'public' => false,
+        'public' => true,
         'show_ui' => true,
         'menu_icon' => 'dashicons-heart',
         'supports' => array( 'title', 'editor' ),
+        'rewrite' => array(
+            'slug' => 'wesele',
+            'with_front' => false
+        ),
     ));
 
 }
+
 add_action( 'init', 'wp_weselny_panel_register_cpt' );
 
 
 /**
- * Tworzenie wpisu Wesela po zakupie produktu
+ * Tworzenie wpisu wesela po zakupie
  */
+
 function wp_weselny_panel_create_wedding_post( $order_id ) {
 
     $order = wc_get_order( $order_id );
@@ -73,5 +78,25 @@ function wp_weselny_panel_create_wedding_post( $order_id ) {
     }
 
 }
+
 add_action( 'woocommerce_order_status_processing', 'wp_weselny_panel_create_wedding_post' );
 add_action( 'woocommerce_order_status_completed', 'wp_weselny_panel_create_wedding_post' );
+
+
+/**
+ * Loader modułów
+ */
+
+$modules = plugin_dir_path(__FILE__) . 'modules/*';
+
+foreach ( glob($modules) as $module ) {
+
+    if ( file_exists($module.'/stoly-panel.php') ) {
+        require_once $module.'/stoly-panel.php';
+    }
+
+    if ( file_exists($module.'/stoly-guests.php') ) {
+        require_once $module.'/stoly-guests.php';
+    }
+
+}

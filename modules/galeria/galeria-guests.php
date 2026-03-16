@@ -88,11 +88,13 @@ $html = '<p><a href="'.get_permalink().'">← Powrót do panelu</a></p>';
 $html .= '<h2>Dodaj zdjęcia</h2>';
 
 $html .= '
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="weselny-upload-form">
 
-<input type="file" name="photos[]" accept="image/*" capture="environment" multiple>
+<input type="file" id="photo-input" name="photos[]" accept="image/*" capture="environment" multiple>
 
-<br><br>
+<div id="photo-preview" style="margin-top:15px;"></div>
+
+<br>
 
 <button>Prześlij</button>
 
@@ -104,6 +106,8 @@ return $html;
 }
 
 
+
+
 /* PANEL KAFELKÓW */
 
 $url = add_query_arg('galeria','1',get_permalink());
@@ -111,6 +115,88 @@ $url = add_query_arg('galeria','1',get_permalink());
 $html = '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
 $html .= '<a href="'.$url.'">Dodaj zdjęcia</a>';
 $html .= '</div>';
+
+$html .= '
+
+<script>
+
+const input = document.getElementById("photo-input");
+const preview = document.getElementById("photo-preview");
+
+let filesArray = [];
+
+if(input){
+
+input.addEventListener("change", function(e){
+
+const files = Array.from(e.target.files);
+
+files.forEach(file => {
+
+filesArray.push(file);
+
+const reader = new FileReader();
+
+reader.onload = function(event){
+
+const wrapper = document.createElement("div");
+wrapper.style.display = "inline-block";
+wrapper.style.margin = "10px";
+wrapper.style.position = "relative";
+
+const img = document.createElement("img");
+img.src = event.target.result;
+img.style.width = "120px";
+img.style.height = "120px";
+img.style.objectFit = "cover";
+img.style.border = "1px solid #ccc";
+
+const remove = document.createElement("button");
+remove.innerHTML = "X";
+remove.type = "button";
+remove.style.position = "absolute";
+remove.style.top = "0";
+remove.style.right = "0";
+remove.style.background = "red";
+remove.style.color = "white";
+remove.style.border = "none";
+remove.style.cursor = "pointer";
+
+remove.onclick = function(){
+wrapper.remove();
+filesArray = filesArray.filter(f => f !== file);
+};
+
+wrapper.appendChild(img);
+wrapper.appendChild(remove);
+preview.appendChild(wrapper);
+
+};
+
+reader.readAsDataURL(file);
+
+});
+
+input.value = "";
+
+});
+
+document.getElementById("weselny-upload-form").addEventListener("submit",function(){
+
+const dataTransfer = new DataTransfer();
+
+filesArray.forEach(file => dataTransfer.items.add(file));
+
+input.files = dataTransfer.files;
+
+});
+
+}
+
+</script>
+
+';
+
 
 return $content.$html;
 

@@ -29,21 +29,32 @@ function wp_weselny_panel_user_has_product( $product_id ) {
         return false;
     }
 
-    return wc_customer_bought_product('',get_current_user_id(),$product_id);
+    return wc_customer_bought_product('', get_current_user_id(), $product_id);
 
 }
 
 
 /**
- * Menu
+ * Menu WooCommerce
  */
 
 function wp_weselny_panel_menu_item( $items ) {
 
     if ( wp_weselny_panel_user_has_product(19) ) {
 
-        $items['panel-wesela'] = 'Panel wesela';
-        $items['funkcje-panelu'] = 'Funkcje panelu';
+        $new_items = array();
+
+        foreach ( $items as $key => $label ) {
+
+            $new_items[$key] = $label;
+
+            if ( $key === 'dashboard' ) {
+                $new_items['panel-wesela'] = 'Panel wesela';
+            }
+
+        }
+
+        return $new_items;
 
     }
 
@@ -80,9 +91,15 @@ function wp_weselny_panel_content() {
 
         echo '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='.esc_url($url).'">';
 
+        echo '<p><a href="'.esc_url($url).'" target="_blank">'.$url.'</a></p>';
+
         echo '<hr>';
 
         echo '<h3>Funkcje panelu</h3>';
+
+        echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+        echo '<a href="'.wc_get_account_endpoint_url('funkcje-panelu').'">Funkcje panelu</a>';
+        echo '</div>';
 
         do_action('weselny_panel_tiles');
 
@@ -94,18 +111,22 @@ add_action('woocommerce_account_panel-wesela_endpoint','wp_weselny_panel_content
 
 
 /**
- * Strona funkcji panelu
+ * Strona Funkcje panelu
  */
 
 function wp_weselny_panel_features_page() {
 
-    echo '<h2>Funkcje panelu</h2>';
+echo '<h2>Funkcje panelu</h2>';
 
-    echo '<form method="post">';
+echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót do panelu</a></p>';
 
-    do_action('weselny_panel_features');
+echo '<form method="post">';
 
-    echo '</form>';
+do_action('weselny_panel_features');
+
+echo '<br><button name="weselny_features_save">Zapisz</button>';
+
+echo '</form>';
 
 }
 

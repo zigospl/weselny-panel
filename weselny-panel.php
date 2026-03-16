@@ -91,12 +91,12 @@ $modules = plugin_dir_path(__FILE__) . 'modules/*';
 
 foreach ( glob($modules) as $module ) {
 
-    if ( file_exists($module.'/stoly-panel.php') ) {
-        require_once $module.'/stoly-panel.php';
+    foreach ( glob($module.'/*-panel.php') as $file ) {
+        require_once $file;
     }
 
-    if ( file_exists($module.'/stoly-guests.php') ) {
-        require_once $module.'/stoly-guests.php';
+    foreach ( glob($module.'/*-guests.php') as $file ) {
+        require_once $file;
     }
 
 }

@@ -97,15 +97,23 @@ if(!$data) $data = [];
 
 /* DODAJ */
 
-if(isset($_POST['dodaj'])){
+if(isset($_POST['title'])){
 
-$data[] = [
-'title'=>'',
-'time'=>'',
-'description'=>''
-];
+foreach($data as $i=>$row){
 
-update_post_meta($post_id,'weselny_harmonogram',$data);
+$data[$i]['title'] = isset($_POST['title'][$i])
+    ? sanitize_text_field($_POST['title'][$i])
+    : '';
+
+$data[$i]['time'] = isset($_POST['time'][$i])
+    ? sanitize_text_field($_POST['time'][$i])
+    : '';
+
+$data[$i]['description'] = isset($_POST['description'][$i])
+    ? wp_kses_post($_POST['description'][$i])
+    : '';
+
+}
 
 }
 

@@ -20,7 +20,7 @@ if(!$enabled) return $content;
 
 
 /* =========================
-   WIDOK GALERII
+   1. WIDOK GALERII
 ========================= */
 
 if(isset($_GET['galeria'])){
@@ -59,8 +59,6 @@ if(isset($_GET['galeria'])){
                     );
 
                     $id = wp_insert_attachment($attachment,$upload['file']);
-
-                    require_once(ABSPATH.'wp-admin/includes/image.php');
 
                     $attach_data = wp_generate_attachment_metadata($id,$upload['file']);
                     wp_update_attachment_metadata($id,$attach_data);
@@ -230,7 +228,16 @@ if(isset($_GET['galeria'])){
 
 
 /* =========================
-   PANEL KAFELKÓW
+   2. BLOKADA (inny moduł otwarty)
+========================= */
+
+if(isset($_GET['stoly']) || isset($_GET['menu'])){
+    return $content;
+}
+
+
+/* =========================
+   3. KAFEL
 ========================= */
 
 $url = add_query_arg('galeria','1',get_permalink());

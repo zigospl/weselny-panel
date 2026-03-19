@@ -15,19 +15,15 @@ $data = get_post_meta($post_id,'weselny_stoly',true);
 if(!$data) return $content;
 
 
-/* jeśli otwarta galeria – nie pokazuj stołów */
-
-if(isset($_GET['galeria'])) return $content;
-
-
-/* jeśli kliknięto kafelek */
+/* =========================
+   1. WIDOK STOŁÓW
+========================= */
 
 if(isset($_GET['stoly'])){
 
 $back = get_permalink();
 
 $html = '<p><a href="'.$back.'">← Powrót do panelu</a></p>';
-
 $html .= '<h2>Rozstaw stołów</h2>';
 
 foreach($data as $table){
@@ -61,17 +57,25 @@ $html .= '</table><br>';
 }
 
 return $html;
-
 }
 
 
-/* panel kafelków */
+/* =========================
+   2. BLOKADA (inne moduły)
+========================= */
+
+if(isset($_GET['galeria']) || isset($_GET['menu'])){
+    return $content;
+}
+
+
+/* =========================
+   3. KAFEL
+========================= */
 
 $url = add_query_arg('stoly','1',get_permalink());
 
-$html = '<h2>Witaj w panelu gościa</h2>';
-
-$html .= '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+$html = '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
 $html .= '<a href="'.$url.'">Rozstaw stołów</a>';
 $html .= '</div>';
 

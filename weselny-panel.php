@@ -100,3 +100,42 @@ foreach ( glob($modules) as $module ) {
     }
 
 }
+
+function weselny_panel_styles(){
+
+wp_enqueue_style(
+    'weselny-style',
+    plugin_dir_url(__FILE__) . 'assets/css/style.css',
+    [],
+    '1.0'
+);
+
+}
+
+add_action('wp_enqueue_scripts','weselny_panel_styles');
+
+function weselny_particles_scripts(){
+
+if(get_post_type() === 'wesela' && is_singular('wesela')){
+
+wp_enqueue_script(
+    'particles-js',
+    'https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js',
+    [],
+    null,
+    true
+);
+
+wp_enqueue_script(
+    'weselny-particles-init',
+    plugin_dir_url(__FILE__) . 'assets/js/particles-init.js',
+    ['particles-js'],
+    '1.0',
+    true
+);
+
+}
+
+}
+
+add_action('wp_enqueue_scripts','weselny_particles_scripts');

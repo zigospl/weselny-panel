@@ -21,7 +21,7 @@ function wp_weselny_panel_gosci_content( $content ) {
         $miejsce = $data['miejsce'] ?? '';
 
         echo '
-        <div style="position:relative;margin-bottom:20px;">
+        <div class="weselny-banner" style="position:relative;margin-bottom:20px;">
 
         <img src="'.$banner.'" style="width:100%;height:250px;object-fit:cover;">
 
@@ -33,6 +33,8 @@ function wp_weselny_panel_gosci_content( $content ) {
         <p>'.$miejsce.'</p>
 
         </div>
+
+        <div id="weselny-particles"></div>
 
         </div>
         ';

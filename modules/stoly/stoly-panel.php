@@ -19,9 +19,6 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_stoly',true);
 Włącz
 </label>
 
-<br><br>
-
-
 <hr>
 
 <?php

@@ -10,8 +10,16 @@ if(get_post_type()!=='wesela' || !is_singular('wesela')) return $content;
 
 $post_id = get_the_ID();
 
-$data = get_post_meta($post_id,'weselny_stoly',true);
+/* właściciel wesela */
+$user_id = get_post_meta($post_id,'user_id',true);
+if(!$user_id) return $content;
 
+/* czy moduł włączony */
+$enabled = get_user_meta($user_id,'weselny_modul_stoly',true);
+if(!$enabled) return $content;
+
+/* dane */
+$data = get_post_meta($post_id,'weselny_stoly',true);
 if(!$data) return $content;
 
 
@@ -64,7 +72,7 @@ return $html;
    2. BLOKADA (inne moduły)
 ========================= */
 
-if(isset($_GET['galeria']) || isset($_GET['menu'])){
+if(isset($_GET['galeria']) || isset($_GET['menu']) || isset($_GET['harmonogram'])){
     return $content;
 }
 

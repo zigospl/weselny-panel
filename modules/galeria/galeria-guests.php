@@ -230,8 +230,9 @@ if(isset($_GET['galeria'])){
 /* =========================
    2. BLOKADA (inny moduł otwarty)
 ========================= */
+$active = weselny_get_active_module();
 
-if(isset($_GET['stoly']) || isset($_GET['menu'])){
+if($active && $active !== 'harmonogram'){
     return $content;
 }
 

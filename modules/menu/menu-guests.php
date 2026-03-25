@@ -47,7 +47,9 @@ return $html;
    2. BLOKADA (inne moduły)
 ========================= */
 
-if(isset($_GET['stoly']) || isset($_GET['galeria'])){
+$active = weselny_get_active_module();
+
+if($active && $active !== 'quiz'){
     return $content;
 }
 

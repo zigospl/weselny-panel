@@ -72,10 +72,11 @@ return $html;
    2. BLOKADA (inne moduły)
 ========================= */
 
-if(isset($_GET['galeria']) || isset($_GET['menu']) || isset($_GET['harmonogram'])){
+$active = weselny_get_active_module();
+
+if($active && $active !== 'stoly'){
     return $content;
 }
-
 
 /* =========================
    3. KAFEL

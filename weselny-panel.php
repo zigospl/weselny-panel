@@ -139,3 +139,17 @@ wp_enqueue_script(
 }
 
 add_action('wp_enqueue_scripts','weselny_particles_scripts');
+
+function weselny_get_active_module(){
+
+$modules = ['stoly','galeria','menu','harmonogram','quiz','zadania'];
+
+foreach($modules as $m){
+    if(isset($_GET[$m])){
+        return $m;
+    }
+}
+
+return false;
+
+}

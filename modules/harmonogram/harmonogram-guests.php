@@ -51,11 +51,11 @@ return $html;
 /* =========================
    BLOKADA
 ========================= */
+$active = weselny_get_active_module();
 
-if(isset($_GET['stoly']) || isset($_GET['galeria']) || isset($_GET['menu'])){
+if($active && $active !== 'harmonogram'){
     return $content;
 }
-
 
 /* =========================
    KAFEL

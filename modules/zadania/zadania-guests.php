@@ -85,8 +85,6 @@ $html = '
 <script>
 
 let tasks = '.$json.';
-let used = [];
-
 let device_id = localStorage.getItem("weselny_device_id");
 
 if(!device_id){
@@ -94,13 +92,58 @@ device_id = "dev-" + Math.random().toString(36).substr(2,9);
 localStorage.setItem("weselny_device_id", device_id);
 }
 
+/* =========================
+   STORAGE
+========================= */
+
+let storageKey = "weselny_tasks_" + device_id;
+
+let saved = localStorage.getItem(storageKey);
+
+let used = [];
+let completed = 0;
+
+if(saved){
+    try{
+        let parsed = JSON.parse(saved);
+        used = parsed.used || [];
+        completed = parsed.completed || 0;
+    }catch(e){}
+}
+
+function saveProgress(){
+    localStorage.setItem(storageKey, JSON.stringify({
+        used: used,
+        completed: completed
+    }));
+}
+
+
+/* ========================= */
+
 let currentTask = null;
 let selectedFile = null;
+
+/* licznik */
+
+function progress(){
+return `<p><strong>${completed} / ${tasks.length} wykonanych zadań</strong></p>`;
+}
+
+
+/* LOSOWANIE */
 
 function losuj(){
 
 if(used.length >= tasks.length){
-document.getElementById("zadania-app").innerHTML = "<h2>Wykonałeś wszystkie zadania!</h2>";
+
+document.getElementById("zadania-app").innerHTML = `
+<h2>Gratulacje! 🎉</h2>
+<p>Wykonałeś <strong>${completed} / ${tasks.length}</strong> zadań</p>
+`;
+
+localStorage.removeItem(storageKey);
+
 return;
 }
 
@@ -111,10 +154,13 @@ index = Math.floor(Math.random()*tasks.length);
 }while(used.includes(index));
 
 used.push(index);
+saveProgress();
 
 currentTask = tasks[index];
 
-let html = "<h2>"+currentTask+"</h2>";
+let html = progress();
+html += "<h2>"+currentTask+"</h2>";
+
 ';
 
 /* TRYB ZDJĘĆ */
@@ -123,15 +169,28 @@ if($photos){
 
 $html .= '
 
-html += `<input type="file" id="task-photo" accept="image/*" capture="environment"><br><br>`;
-html += `<div id="preview"></div><br>`;
-html += `<button onclick="upload()">Potwierdź wykonanie</button>`;
+html += `
+<input type="file" id="task-photo" accept="image/*" capture="environment"><br><br>
+
+<div id="preview"></div>
+
+<div id="loading" style="display:none;font-weight:bold;margin-top:10px;">
+Wysyłanie<span id="dots"></span>
+</div>
+
+<br>
+
+<button onclick="upload()">Potwierdź wykonanie</button>
+`;
+
 ';
 
 }else{
 
 $html .= '
+
 html += `<button onclick="next()">Potwierdź wykonanie</button>`;
+
 ';
 
 }
@@ -141,6 +200,8 @@ $html .= '
 html += "<br><br><button onclick=\'losuj()\'>Zrezygnuj</button>";
 
 document.getElementById("zadania-app").innerHTML = html;
+
+/* preview */
 
 let input = document.getElementById("task-photo");
 
@@ -152,7 +213,22 @@ selectedFile = e.target.files[0];
 let reader = new FileReader();
 
 reader.onload = function(ev){
-document.getElementById("preview").innerHTML = `<img src="${ev.target.result}" style="width:120px;">`;
+
+document.getElementById("preview").innerHTML = `
+<div style="position:relative;display:inline-block;">
+<img src="${ev.target.result}" style="width:120px;height:120px;object-fit:cover;border:1px solid #ccc;">
+<button onclick="removePhoto()" style="
+position:absolute;
+top:0;
+right:0;
+background:red;
+color:white;
+border:none;
+cursor:pointer;
+">X</button>
+</div>
+`;
+
 };
 
 reader.readAsDataURL(selectedFile);
@@ -162,9 +238,42 @@ reader.readAsDataURL(selectedFile);
 
 }
 
+
+/* USUWANIE ZDJĘCIA */
+
+function removePhoto(){
+selectedFile = null;
+document.getElementById("preview").innerHTML = "";
+}
+
+
+/* NEXT */
+
 function next(){
+completed++;
+saveProgress();
 losuj();
 }
+
+
+/* LOADING KROPKI */
+
+let dotsInterval;
+
+function startDots(){
+let count = 0;
+dotsInterval = setInterval(()=>{
+count = (count + 1) % 4;
+document.getElementById("dots").innerHTML = ".".repeat(count);
+},500);
+}
+
+function stopDots(){
+clearInterval(dotsInterval);
+}
+
+
+/* UPLOAD */
 
 function upload(){
 
@@ -172,6 +281,11 @@ if(!selectedFile){
 alert("Dodaj zdjęcie!");
 return;
 }
+
+let loading = document.getElementById("loading");
+
+loading.style.display = "block";
+startDots();
 
 let formData = new FormData();
 
@@ -186,16 +300,27 @@ body: formData
 })
 .then(r => r.text())
 .then(() => {
-alert("Zdjęcie zapisane");
+
+completed++;
+saveProgress();
+
+stopDots();
+loading.innerHTML = "Gotowe ✅";
+
+setTimeout(()=>{
 losuj();
+},800);
+
 });
 
 }
 
-/* start */
+
+/* START */
 
 document.getElementById("zadania-app").innerHTML = `
 <p>'.esc_js($text).'</p>
+${progress()}
 <button onclick="losuj()">Losuj zadanie</button>
 `;
 

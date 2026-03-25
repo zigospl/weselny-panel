@@ -48,14 +48,51 @@ $html = '
 <script>
 
 let questions = '.$json.';
+
+/* =========================
+   DEVICE + STORAGE
+========================= */
+
+let device_id = localStorage.getItem("weselny_device_id");
+
+if(!device_id){
+device_id = "dev-" + Math.random().toString(36).substr(2,9);
+localStorage.setItem("weselny_device_id", device_id);
+}
+
+let storageKey = "weselny_quiz_" + device_id;
+
+let saved = localStorage.getItem(storageKey);
+
 let index = 0;
 let score = 0;
+
+if(saved){
+    try{
+        let parsed = JSON.parse(saved);
+        index = parsed.index || 0;
+        score = parsed.score || 0;
+    }catch(e){}
+}
+
+function saveProgress(){
+    localStorage.setItem(storageKey, JSON.stringify({
+        index: index,
+        score: score
+    }));
+}
+
+
+/* =========================
+   RENDER
+========================= */
 
 function render(){
 
 let q = questions[index];
 
-let html = "<h2>"+q.question+"</h2>";
+let html = `<p><strong>Pytanie ${index+1} / ${questions.length}</strong></p>`;
+html += "<h2>"+q.question+"</h2>";
 
 q.answers.forEach((a,i)=>{
 html += `<label><input type="radio" name="ans" value="${i}"> ${a.text}</label><br>`;
@@ -66,6 +103,11 @@ html += "<br><button onclick=\'next()\'>Wybierz odpowiedź</button>";
 document.getElementById("quiz-app").innerHTML = html;
 
 }
+
+
+/* =========================
+   NEXT
+========================= */
 
 function next(){
 
@@ -83,11 +125,17 @@ score++;
 }
 
 index++;
+saveProgress();
 
 if(index >= questions.length){
 
 document.getElementById("quiz-app").innerHTML =
-"<h2>Gratulacje!</h2><p>Poprawne odpowiedzi: "+score+"/"+questions.length+"</p>";
+`<h2>Gratulacje! 🎉</h2>
+<p>Poprawne odpowiedzi: <strong>${score}/${questions.length}</strong></p>
+
+<br>
+
+<button onclick="restartQuiz()">Spróbuj ponownie</button>`;
 
 return;
 }
@@ -96,7 +144,40 @@ render();
 
 }
 
+
+/* =========================
+   RESTART
+========================= */
+
+function restartQuiz(){
+
+localStorage.removeItem(storageKey);
+
+index = 0;
+score = 0;
+
 render();
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+if(index >= questions.length){
+
+document.getElementById("quiz-app").innerHTML =
+`<h2>Gratulacje! 🎉</h2>
+<p>Poprawne odpowiedzi: <strong>${score}/${questions.length}</strong></p>
+
+<br>
+
+<button onclick="restartQuiz()">Spróbuj ponownie</button>`;
+
+}else{
+render();
+}
 
 </script>
 ';
@@ -111,9 +192,10 @@ return $html;
 
 $active = weselny_get_active_module();
 
-if($active && $active !== 'stoly'){
+if($active && $active !== 'quiz'){
     return $content;
 }
+
 
 /* =========================
    KAFEL

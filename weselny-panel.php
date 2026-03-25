@@ -142,7 +142,7 @@ add_action('wp_enqueue_scripts','weselny_particles_scripts');
 
 function weselny_get_active_module(){
 
-$modules = ['stoly','galeria','menu','harmonogram','quiz','zadania'];
+$modules = ['stoly','galeria','menu','harmonogram','quiz','zadania','custom','ksiega'];
 
 foreach($modules as $m){
     if(isset($_GET[$m])){

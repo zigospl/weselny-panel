@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function weselny_wyglad_tile(){
 
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div class="weselny-tile">';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?wyglad=1">Wygląd panelu</a>';
 echo '</div>';
 

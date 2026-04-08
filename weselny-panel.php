@@ -66,7 +66,7 @@ function wp_weselny_panel_create_wedding_post( $order_id ) {
                     'post_type' => 'wesela',
                     'post_status' => 'publish',
                     'post_title' => 'Wesele użytkownika ' . $user_id,
-                    'post_content' => 'Witaj w panelu weselnym',
+                    'post_content' => '',
                 ));
 
                 update_post_meta( $post_id, 'user_id', $user_id );

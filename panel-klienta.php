@@ -91,13 +91,13 @@ function wp_weselny_panel_content() {
 
         echo '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='.esc_url($url).'">';
 
-        echo '<p><a href="'.esc_url($url).'" target="_blank">'.$url.'</a></p>';
+        echo '<p style="padding-top:20px;"><a href="'.esc_url($url).'" target="_blank">'.$url.'</a></p>';
 
         echo '<hr>';
 
         echo '<h3>Funkcje panelu</h3>';
 
-        echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+        echo '<div class="weselny-tile">';
         echo '<a href="'.wc_get_account_endpoint_url('funkcje-panelu').'">Funkcje panelu</a>';
         echo '</div>';
 
@@ -118,6 +118,19 @@ function wp_weselny_panel_features_page() {
 
 echo '<h2>Funkcje panelu</h2>';
 
+/* KOMUNIKAT */
+echo '<div id="weselny-save-msg" style="
+display:none;
+background:#d4edda;
+color:#155724;
+padding:10px 15px;
+margin-bottom:15px;
+border-radius:6px;
+font-weight:500;
+">
+Zmiany zapisane
+</div>';
+
 echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót do panelu</a></p>';
 
 echo '<form method="post">';
@@ -127,6 +140,27 @@ do_action('weselny_panel_features');
 echo '<br><button name="weselny_features_save">Zapisz</button>';
 
 echo '</form>';
+
+/* SKRYPT */
+if(isset($_POST['weselny_features_save'])){
+    echo '<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        const msg = document.getElementById("weselny-save-msg");
+        if(msg){
+            msg.style.display = "block";
+            msg.style.opacity = "0";
+            msg.style.transition = "opacity 0.3s";
+
+            setTimeout(()=>{ msg.style.opacity = "1"; }, 50);
+
+            setTimeout(()=>{
+                msg.style.opacity = "0";
+                setTimeout(()=>{ msg.style.display = "none"; }, 300);
+            }, 2000);
+        }
+    });
+    </script>';
+}
 
 }
 

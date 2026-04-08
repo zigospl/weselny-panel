@@ -1,0 +1,34 @@
+.guest-row {
+    
+    button {        
+        padding: 10px 30px;
+        background-color: #192e03;
+        color: #fff;
+        transition: 300ms ease;
+        border-width: 1px;
+        border-radius: 0px;
+
+        &:hover {
+            color: #192e03;
+            background-color: #fff;
+        }
+    }
+}
+
+input {
+        padding: 10px;
+    }
+
+button {        
+        padding: 10px 30px;
+        background-color: #192e03;
+        color: #fff;
+        transition: 300ms ease;
+        border-width: 1px;
+        border-radius: 0px;
+
+        &:hover {
+            color: #192e03;
+            background-color: #fff;
+        }
+    }

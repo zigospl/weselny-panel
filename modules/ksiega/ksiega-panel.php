@@ -15,7 +15,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_ksiega',true);
 
 <label>
 <input type="checkbox" name="ksiega_enabled" <?php checked($enabled,1); ?>>
-Włącz
+
 </label>
 
 <hr>
@@ -54,7 +54,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_ksiega',true);
 
 if(!$enabled) return;
 
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div class="weselny-tile">';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?ksiega=1">Księga gości</a>';
 echo '</div>';
 

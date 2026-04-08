@@ -348,7 +348,7 @@ return $content;
 
 $url = add_query_arg('zadania','1',get_permalink());
 
-$html = '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+$html = '<div class="weselny-tile">';
 $html .= '<a href="'.$url.'">Zadania</a>';
 $html .= '</div>';
 

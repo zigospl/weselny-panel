@@ -18,7 +18,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_zadania',true);
 
 <label>
 <input type="checkbox" name="zadania_enabled" <?php checked($enabled,1); ?>>
-Włącz
+
 </label>
 
 <hr>
@@ -60,12 +60,12 @@ if(!$enabled) return;
 
 $photos = get_user_meta(get_current_user_id(),'weselny_zadania_photos',true);
 
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div  class="weselny-tile">';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?zadania=1">Zadania</a>';
 echo '</div>';
 
 if($photos){
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div class="weselny-tile">';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?zadania-zdjecia=1">Zdjęcia z zadań</a>';
 echo '</div>';
 }

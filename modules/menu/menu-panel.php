@@ -18,7 +18,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_menu',true);
 
 <label>
 <input type="checkbox" name="menu_enabled" <?php checked($enabled,1); ?>>
-Włącz
+
 </label>
 
 <hr>
@@ -59,7 +59,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_menu',true);
 
 if($enabled){
 
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div class="weselny-tile">';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?menu=1">Menu weselne</a>';
 echo '</div>';
 
@@ -152,7 +152,7 @@ foreach($data as $i=>$section){
 
 echo '<h3>Sekcja '.($i+1).'</h3>';
 
-echo '<input type="text" name="title[]" value="'.esc_attr($section['title']).'" placeholder="Nagłówek"><br><br>';
+echo '<input class="text-input-block" type="text" name="title[]" value="'.esc_attr($section['title']).'" placeholder="Nagłówek"><br><br>';
 
 wp_editor(
 $section['content'],

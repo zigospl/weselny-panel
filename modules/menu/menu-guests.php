@@ -60,7 +60,7 @@ if($active && $active !== 'quiz'){
 
 $url = add_query_arg('menu','1',get_permalink());
 
-$html = '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+$html = '<div class="weselny-tile">';
 $html .= '<a href="'.$url.'">Menu</a>';
 $html .= '</div>';
 

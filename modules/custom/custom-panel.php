@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 function weselny_custom_tile(){
     echo '<div class="weselny-tile">';
-    echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?custom=1">Własne kafle</a>';
+    echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?custom=1">Własne sekcje</a>';
     echo '</div>';
 }
 add_action('weselny_panel_tiles','weselny_custom_tile');
@@ -39,6 +39,16 @@ if(!$data) $data = [];
 
 
 /* =========================
+   REDIRECT (anti-duplication)
+========================= */
+
+function weselny_redirect(){
+    wp_redirect(add_query_arg('custom','1', wc_get_account_endpoint_url('panel-wesela')));
+    exit;
+}
+
+
+/* =========================
    HELPER – MERGE BLOCKS
 ========================= */
 
@@ -52,7 +62,6 @@ function weselny_merge_blocks($existing, $posted){
 
         $type = $b['type'] ?? '';
         $new_value = $b['value'] ?? '';
-
         $old_value = $existing[$i]['value'] ?? '';
 
         $result[$i] = [
@@ -72,6 +81,7 @@ function weselny_merge_blocks($existing, $posted){
 if(isset($_POST['add_module'])){
     $data[] = ['title'=>'','blocks'=>[]];
     update_post_meta($post_id,'weselny_custom_modules',$data);
+    weselny_redirect();
 }
 
 
@@ -84,6 +94,7 @@ if(isset($_POST['delete_module'])){
     unset($data[$i]);
     $data = array_values($data);
     update_post_meta($post_id,'weselny_custom_modules',$data);
+    weselny_redirect();
 }
 
 
@@ -106,6 +117,7 @@ if(isset($_POST['add_block'])){
     ];
 
     update_post_meta($post_id,'weselny_custom_modules',$data);
+    weselny_redirect();
 }
 
 
@@ -127,6 +139,7 @@ if(isset($_POST['delete_block'])){
     $data[$i]['blocks'] = array_values($data[$i]['blocks']);
 
     update_post_meta($post_id,'weselny_custom_modules',$data);
+    weselny_redirect();
 }
 
 
@@ -153,6 +166,8 @@ if(isset($_POST['upload_image']) && !empty($_FILES['block_image']['tmp_name'])){
         $data[$i]['blocks'][$k]['value'] = $upload['url'];
         update_post_meta($post_id,'weselny_custom_modules',$data);
     }
+
+    weselny_redirect();
 }
 
 
@@ -173,22 +188,27 @@ if(isset($_POST['delete_image'])){
     $data[$i]['blocks'][$k]['value'] = '';
 
     update_post_meta($post_id,'weselny_custom_modules',$data);
+    weselny_redirect();
 }
 
 
 /* =========================
-   SAVE MODULE
+   SAVE MODULE (FIX IMAGE BUG)
 ========================= */
 
 if(isset($_POST['save_module'])){
 
-$i = intval($_POST['index']);
+    $i = intval($_POST['index']);
 
-$data[$i]['title'] = sanitize_text_field($_POST['title']);
+    $data[$i]['title'] = sanitize_text_field($_POST['title']);
 
-$data[$i]['blocks'] = $_POST['blocks'] ?? [];
+    $data[$i]['blocks'] = weselny_merge_blocks(
+        $data[$i]['blocks'] ?? [],
+        $_POST['blocks'] ?? []
+    );
 
-update_post_meta($post_id,'weselny_custom_modules',$data);
+    update_post_meta($post_id,'weselny_custom_modules',$data);
+    weselny_redirect();
 }
 
 
@@ -196,10 +216,10 @@ update_post_meta($post_id,'weselny_custom_modules',$data);
    UI
 ========================= */
 
-echo '<h2>Własne kafle</h2>';
+echo '<h2>Własne sekcje</h2>';
 echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót</a></p>';
 
-echo '<form method="post"><button type="submit" name="add_module">Dodaj kafelek</button></form><hr>';
+echo '<form method="post"><button type="submit" name="add_module">Dodaj sekcję</button></form><hr>';
 
 foreach($data as $i=>$mod){
 
@@ -209,7 +229,7 @@ echo '<form method="post" enctype="multipart/form-data">';
 
 echo '<input type="hidden" name="index" value="'.$i.'">';
 
-echo '<input type="text" name="title" placeholder="Nazwa kafla" value="'.esc_attr($mod['title'] ?? '').'"><br><br>';
+echo '<input class="section-title-input" type="text" name="title" placeholder="Nazwa sekcji" value="'.esc_attr($mod['title'] ?? '').'"><br><br>';
 
 
 if(!empty($mod['blocks'])){
@@ -224,28 +244,41 @@ echo '<div style="border:1px dashed #aaa;padding:10px;margin-bottom:10px;">';
 echo '<strong>'.$type.'</strong>';
 echo '<input type="hidden" name="blocks['.$k.'][type]" value="'.$type.'">';
 
-echo '<button type="submit" name="delete_block" value="'.$k.'" style="float:right;background:red;color:#fff;">X</button><br><br>';
+echo '<button type="submit" name="delete_block" value="'.$k.'" style="float:right;">X</button><br><br>';
 
 
 if($type=='text'){
-echo '<textarea name="blocks['.$k.'][value]">'.$value.'</textarea>';
+
+$editor_id = 'weselny_editor_'.$i.'_'.$k;
+
+wp_editor(
+    $value,
+    $editor_id,
+    [
+        'textarea_name' => 'blocks['.$k.'][value]',
+        'media_buttons' => true,
+        'textarea_rows' => 6,
+        'teeny' => false,
+        'quicktags' => true
+    ]
+);
+
 }
 elseif($type=='img'){
 
-// 🔥 KLUCZOWE – zawsze wysyłamy wartość
 echo '<input type="hidden" name="blocks['.$k.'][value]" value="'.esc_attr($value).'">';
 
 if($value){
-echo '<img src="'.$value.'" style="width:120px;height:120px;object-fit:cover;"><br>';
+echo '<img src="'.$value.'" style="width:120px;height:120px;object-fit:cover;display:block;margin-bottom:10px;">';
 echo '<button type="submit" name="delete_image" value="'.$k.'">Usuń obrazek</button><br>';
 }
 
-echo '<input type="file" name="block_image">';
+echo '<input type="file" name="block_image" class="image-input">';
 echo '<button type="submit" name="upload_image" value="'.$k.'">Wyślij obraz</button>';
 
 }
 else{
-echo '<input type="text" name="blocks['.$k.'][value]" value="'.$value.'">';
+echo '<input class="text-input-block" type="text" name="blocks['.$k.'][value]" value="'.$value.'">';
 }
 
 echo '</div>';
@@ -253,7 +286,6 @@ echo '</div>';
 }
 
 }
-
 
 echo '
 <select name="type">
@@ -266,13 +298,58 @@ echo '
 <br><br>
 ';
 
-echo '<button type="submit" name="save_module">Zapisz</button>';
-echo '<button type="submit" name="delete_module">Usuń kafel</button>';
+echo '<button type="submit" class="save-button-section" name="save_module">Zapisz</button>';
+echo '<button type="submit" name="delete_module">Usuń sekcję</button>';
 
 echo '</form>';
 echo '</div>';
 
 }
+
+
+/* =========================
+   JS PREVIEW
+========================= */
+
+echo '
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+document.querySelectorAll(".image-input").forEach(input => {
+
+    input.addEventListener("change", function(e){
+
+        const file = e.target.files[0];
+        if(!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function(ev){
+
+            let img = input.parentNode.querySelector("img");
+
+            if(!img){
+                img = document.createElement("img");
+                img.style.width = "120px";
+                img.style.height = "120px";
+                img.style.objectFit = "cover";
+                img.style.display = "block";
+                img.style.marginBottom = "10px";
+                input.parentNode.insertBefore(img, input);
+            }
+
+            img.src = ev.target.result;
+        };
+
+        reader.readAsDataURL(file);
+
+    });
+
+});
+
+});
+</script>
+';
 
 }
 

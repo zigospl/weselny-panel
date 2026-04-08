@@ -39,7 +39,7 @@ elseif($type=='h2'){
 $html .= '<h3>'.esc_html($value).'</h3>';
 }
 elseif($type=='text'){
-$html .= '<div>'.$value.'</div>'; // WYSIWYG – bez esc_html
+$html .= '<div>'.$value.'</div>';
 }
 elseif($type=='img' && !empty($value)){
 $html .= '<img src="'.esc_url($value).'" style="width:100%;max-width:400px;display:block;margin-bottom:15px;">';
@@ -48,13 +48,20 @@ $html .= '<img src="'.esc_url($value).'" style="width:100%;max-width:400px;displ
 }
 }
 
+/* 🔥 KLUCZOWE — blokujemy inne moduły */
 return $html;
+
 }
 
 
 /* =========================
-   BLOKADA (FIX)
+   BLOKADA GLOBALNA (FIX)
 ========================= */
+
+/* jeśli jesteśmy w custom — nic więcej nie renderuj */
+if(isset($_GET['custom_id'])){
+    return $content;
+}
 
 $active = weselny_get_active_module();
 

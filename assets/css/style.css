@@ -1,7 +1,61 @@
+.guest-row button {
+  padding: 10px 30px;
+  background-color: #192e03;
+  color: #fff;
+  transition: 300ms ease;
+  border-width: 1px;
+  border-radius: 0px;
+}
+.guest-row button:hover {
+  color: #192e03;
+  background-color: #fff;
+}
+
+input {
+  padding: 10px;
+}
+
+button {
+  padding: 10px 30px;
+  background-color: #192e03;
+  color: #fff;
+  transition: 300ms ease;
+  border-width: 1px;
+  border-radius: 0px;
+}
+button:hover {
+  color: #192e03;
+  background-color: #fff;
+}
+
+select[name=type] {
+  padding: 10px;
+}
+
 .weselny-banner {
   position: relative;
   height: 250px;
   overflow: hidden;
+  min-height: 50vh;
+}
+.weselny-banner .weselny-banner-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0px;
+  width: 100%;
+  height: 100%;
+  align-content: flex-end;
+}
+.weselny-banner .weselny-banner-content h2 {
+  font-size: 30px;
+}
+.weselny-banner img {
+  min-height: 80vh;
 }
 .weselny-banner-img {
   width: 100%;
@@ -14,6 +68,7 @@
   left: 0;
   width: 100%;
   height: 100%;
+  z-index: 9;
 }
 .weselny-banner-content {
   position: absolute;
@@ -25,6 +80,143 @@
   background: rgba(0, 0, 0, 0.4);
   padding: 20px;
   z-index: 2;
+}
+
+body {
+  margin: 0px;
+}
+body .weselny-content {
+  max-width: 1300px;
+  padding: 15px;
+}
+body .weselny-tile {
+  display: block;
+  width: 90%;
+  text-align: center;
+  margin: auto;
+  margin-bottom: 10px;
+}
+body .weselny-tile a {
+  color: #000;
+  text-decoration: none;
+  padding: 20px;
+  width: 100%;
+  border: 1px solid #ccc;
+  display: block;
+  transition: 300ms ease;
+}
+body .weselny-tile a:hover {
+  background-color: #192e03;
+  color: #fff;
+}
+
+@media screen and (min-width: 1000px) {
+  body .weselny-tile {
+    display: inline-block;
+    width: 30%;
+    text-align: center;
+    margin-right: 10px;
+  }
+}
+.section-title-input {
+  border-width: 0px 0px 1px 0px;
+  width: 100%;
+}
+
+.new-block-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.save-button-section {
+  margin-right: 5px;
+}
+
+.text-input-block {
+  width: 100%;
+}
+
+.question-input-block {
+  margin-right: 10px;
+  width: 75%;
+}
+
+.delete_module-section {
+  padding: 0px 7px;
+  background-color: #192e03;
+  float: right;
+  color: #fff;
+  font-weight: 500;
+}
+
+.section-select {
+  border-width: 1px;
+  width: 100%;
+}
+
+input[type=checkbox] {
+  appearance: none;
+  background-color: #dfe1e4;
+  border-radius: 72px;
+  border-style: none;
+  flex-shrink: 0;
+  height: 20px;
+  margin: 0;
+  position: relative;
+  width: 30px;
+}
+
+input[type=checkbox]::before {
+  bottom: -6px;
+  content: "";
+  left: -6px;
+  position: absolute;
+  right: -6px;
+  top: -6px;
+}
+
+input[type=checkbox],
+input[type=checkbox]::after {
+  transition: all 100ms ease-out;
+}
+
+input[type=checkbox]::after {
+  background-color: #fff;
+  border-radius: 50%;
+  content: "";
+  height: 14px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  width: 14px;
+}
+
+input[type=checkbox] {
+  cursor: default;
+}
+
+input[type=checkbox]:hover {
+  background-color: #c9cbcd;
+  transition-duration: 0s;
+}
+
+input[type=checkbox]:checked {
+  background-color: #192e03;
+}
+
+input[type=checkbox]:checked::after {
+  background-color: #fff;
+  left: 13px;
+}
+
+label :focus:not(.focus-visible) {
+  outline: 0;
+}
+
+input[type=checkbox]:checked:hover {
+  background-color: #192e03;
 }
 
 /*# sourceMappingURL=style.css.map */

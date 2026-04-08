@@ -18,7 +18,6 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_harmonogram',true)
 
 <label>
 <input type="checkbox" name="harmonogram_enabled" <?php checked($enabled,1); ?>>
-Włącz
 </label>
 
 <hr>
@@ -59,7 +58,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_harmonogram',true)
 
 if($enabled){
 
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div class="weselny-tile">';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?harmonogram=1">Harmonogram</a>';
 echo '</div>';
 
@@ -95,63 +94,77 @@ $data = get_post_meta($post_id,'weselny_harmonogram',true);
 if(!$data) $data = [];
 
 
-/* DODAJ */
+/* =========================
+   REDIRECT
+========================= */
 
-if(isset($_POST['title'])){
-
-foreach($data as $i=>$row){
-
-$data[$i]['title'] = isset($_POST['title'][$i])
-    ? sanitize_text_field($_POST['title'][$i])
-    : '';
-
-$data[$i]['time'] = isset($_POST['time'][$i])
-    ? sanitize_text_field($_POST['time'][$i])
-    : '';
-
-$data[$i]['description'] = isset($_POST['description'][$i])
-    ? wp_kses_post($_POST['description'][$i])
-    : '';
-
-}
-
+function weselny_harmonogram_redirect(){
+    wp_redirect(add_query_arg('harmonogram','1', wc_get_account_endpoint_url('panel-wesela')));
+    exit;
 }
 
 
-/* USUŃ */
+/* =========================
+   DODAJ POZYCJĘ
+========================= */
+
+if(isset($_POST['dodaj'])){
+
+$data[] = [
+'title' => '',
+'time' => '',
+'description' => ''
+];
+
+update_post_meta($post_id,'weselny_harmonogram',$data);
+
+weselny_harmonogram_redirect();
+
+}
+
+
+/* =========================
+   USUŃ
+========================= */
 
 if(isset($_POST['usun'])){
 
-$index = intval($_POST['index']);
+$index = intval($_POST['usun']);
 
 unset($data[$index]);
 $data = array_values($data);
 
 update_post_meta($post_id,'weselny_harmonogram',$data);
 
+weselny_harmonogram_redirect();
+
 }
 
 
-/* ZAPIS */
+/* =========================
+   ZAPIS
+========================= */
 
 if(isset($_POST['zapisz'])){
 
 foreach($data as $i=>$row){
 
-$data[$i]['title'] = sanitize_text_field($_POST['title'][$i]);
-$data[$i]['time'] = sanitize_text_field($_POST['time'][$i]);
-$data[$i]['description'] = sanitize_text_field($_POST['description'][$i]);
+$data[$i]['title'] = sanitize_text_field($_POST['title'][$i] ?? '');
+$data[$i]['time'] = sanitize_text_field($_POST['time'][$i] ?? '');
+$data[$i]['description'] = wp_kses_post($_POST['description'][$i] ?? '');
 
 }
 
 update_post_meta($post_id,'weselny_harmonogram',$data);
 
-echo "<script>alert('Zapisano harmonogram');</script>";
+weselny_harmonogram_redirect();
 
 }
 
 
-/* HTML */
+/* =========================
+   HTML
+========================= */
 
 echo '<h2>Harmonogram</h2>';
 echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót</a></p>';
@@ -162,8 +175,9 @@ foreach($data as $i=>$row){
 
 echo '<h3>Pozycja '.($i+1).'</h3>';
 
-echo '<input type="text" name="title[]" placeholder="Nagłówek" value="'.esc_attr($row['title']).'"><br><br>';
-echo '<input type="text" name="time[]" placeholder="Czas (np. 16:00)" value="'.esc_attr($row['time']).'"><br><br>';
+echo '<input class="text-input-block" type="text" name="title[]" placeholder="Nagłówek" value="'.esc_attr($row['title']).'"><br><br>';
+echo '<input class="text-input-block" type="text" name="time[]" placeholder="Czas (np. 16:00)" value="'.esc_attr($row['time']).'"><br><br>';
+
 wp_editor(
     $row['description'],
     'description_'.$i,
@@ -174,8 +188,7 @@ wp_editor(
 );
 
 echo '<br>';
-echo '<input type="hidden" name="index" value="'.$i.'">';
-echo '<button name="usun">Usuń</button>';
+echo '<button name="usun" value="'.$i.'">Usuń</button>';
 
 echo '<hr>';
 

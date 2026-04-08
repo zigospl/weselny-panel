@@ -16,7 +16,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_galeria',true);
 
 <label>
 <input type="checkbox" name="galeria_enabled" <?php checked($enabled,1); ?>>
-Włącz
+
 </label>
 
 <hr>
@@ -53,7 +53,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_galeria',true);
 
 if($enabled){
 
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div class="weselny-tile">';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?galeria=1">Zdjęcia gości</a>';
 echo '</div>';
 

@@ -16,7 +16,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_stoly',true);
 
 <label>
 <input type="checkbox" name="stoly_enabled" <?php checked($enabled,1); ?>>
-Włącz
+
 </label>
 
 <hr>
@@ -39,7 +39,7 @@ $enabled = isset($_POST['stoly_enabled']) ? 1 : 0;
 update_user_meta(get_current_user_id(),'weselny_modul_stoly',$enabled);
 
 add_action('wp_footer',function(){
-echo "<script>alert('Ustawienia zapisane');</script>";
+
 });
 
 }
@@ -57,7 +57,7 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_stoly',true);
 
 if($enabled){
 
-echo '<div style="border:1px solid #ccc;padding:20px;display:inline-block;margin:10px;">';
+echo '<div class="weselny-tile" >';
 echo '<a href="'.wc_get_account_endpoint_url('panel-wesela').'?stoly=1">Lista stołów</a>';
 echo '</div>';
 

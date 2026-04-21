@@ -4,21 +4,21 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-function weselny_zadania_guest($content){
+/* =========================
+   RENDER MODUŁU
+========================= */
 
-if(get_post_type()!=='wesela' || !is_singular('wesela')) return $content;
-
-$post_id = get_the_ID();
+function weselny_zadania_render($post_id){
 
 $user_id = get_post_meta($post_id,'user_id',true);
-if(!$user_id) return $content;
+if(!$user_id) return;
 
 $enabled = get_user_meta($user_id,'weselny_modul_zadania',true);
-if(!$enabled) return $content;
+if(!$enabled) return;
 
 
 /* =========================
-   UPLOAD
+   UPLOAD (AJAX bez ajaxa 😄)
 ========================= */
 
 if(isset($_FILES['photo'])){
@@ -59,7 +59,6 @@ update_post_meta($_POST['post_id'],'weselny_zadania_photos_data',$data);
 }
 
 exit;
-
 }
 
 
@@ -73,12 +72,16 @@ $data = get_post_meta($post_id,'weselny_zadania',true);
 $text = get_post_meta($post_id,'weselny_zadania_text',true);
 $photos = get_user_meta($user_id,'weselny_zadania_photos',true);
 
-if(!$data) return '<p>Brak zadań</p>';
+if(!$data){
+echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>';
+echo '<p>Brak zadań</p>';
+return;
+}
 
 $json = json_encode(array_values($data));
 
-$html = '
-<p><a href="'.get_permalink().'">← Powrót</a></p>
+echo '
+<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>
 
 <div id="zadania-app"></div>
 
@@ -92,9 +95,7 @@ device_id = "dev-" + Math.random().toString(36).substr(2,9);
 localStorage.setItem("weselny_device_id", device_id);
 }
 
-/* =========================
-   STORAGE
-========================= */
+/* STORAGE */
 
 let storageKey = "weselny_tasks_" + device_id;
 
@@ -118,18 +119,12 @@ function saveProgress(){
     }));
 }
 
-
-/* ========================= */
-
 let currentTask = null;
 let selectedFile = null;
-
-/* licznik */
 
 function progress(){
 return `<p><strong>${completed} / ${tasks.length} wykonanych zadań</strong></p>`;
 }
-
 
 /* LOSOWANIE */
 
@@ -143,7 +138,6 @@ document.getElementById("zadania-app").innerHTML = `
 `;
 
 localStorage.removeItem(storageKey);
-
 return;
 }
 
@@ -160,15 +154,13 @@ currentTask = tasks[index];
 
 let html = progress();
 html += "<h2>"+currentTask+"</h2>";
-
 ';
 
 /* TRYB ZDJĘĆ */
 
 if($photos){
 
-$html .= '
-
+echo '
 html += `
 <input type="file" id="task-photo" accept="image/*" capture="environment"><br><br>
 
@@ -182,26 +174,20 @@ Wysyłanie<span id="dots"></span>
 
 <button onclick="upload()">Potwierdź wykonanie</button>
 `;
-
 ';
 
 }else{
 
-$html .= '
-
+echo '
 html += `<button onclick="next()">Potwierdź wykonanie</button>`;
-
 ';
-
 }
 
-$html .= '
+echo '
 
 html += "<br><br><button onclick=\'losuj()\'>Zrezygnuj</button>";
 
 document.getElementById("zadania-app").innerHTML = html;
-
-/* preview */
 
 let input = document.getElementById("task-photo");
 
@@ -238,14 +224,12 @@ reader.readAsDataURL(selectedFile);
 
 }
 
-
-/* USUWANIE ZDJĘCIA */
+/* REMOVE PHOTO */
 
 function removePhoto(){
 selectedFile = null;
 document.getElementById("preview").innerHTML = "";
 }
-
 
 /* NEXT */
 
@@ -255,8 +239,7 @@ saveProgress();
 losuj();
 }
 
-
-/* LOADING KROPKI */
+/* DOTS */
 
 let dotsInterval;
 
@@ -271,7 +254,6 @@ document.getElementById("dots").innerHTML = ".".repeat(count);
 function stopDots(){
 clearInterval(dotsInterval);
 }
-
 
 /* UPLOAD */
 
@@ -315,7 +297,6 @@ losuj();
 
 }
 
-
 /* START */
 
 document.getElementById("zadania-app").innerHTML = `
@@ -327,7 +308,7 @@ ${progress()}
 </script>
 ';
 
-return $html;
+return;
 }
 
 
@@ -338,7 +319,7 @@ return $html;
 $active = weselny_get_active_module();
 
 if($active && $active !== 'zadania'){
-return $content;
+return;
 }
 
 
@@ -346,14 +327,13 @@ return $content;
    KAFEL
 ========================= */
 
-$url = add_query_arg('zadania','1',get_permalink());
+$url = add_query_arg('zadania','1',get_permalink($post_id));
 
-$html = '<div class="weselny-tile">';
-$html .= '<a href="'.$url.'">Zadania</a>';
-$html .= '</div>';
-
-return $content.$html;
+echo '<div class="weselny-tile">';
+echo '<a href="'.esc_url($url).'">Zadania</a>';
+echo '</div>';
 
 }
 
-add_filter('the_content','weselny_zadania_guest');
+/* 🔥 NOWY SYSTEM */
+add_action('weselny_render_module_zadania','weselny_zadania_render');

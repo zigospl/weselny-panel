@@ -4,68 +4,72 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-function weselny_menu_guest($content){
+/* =========================
+   RENDER MODUŁU
+========================= */
 
-if(get_post_type()!=='wesela' || !is_singular('wesela')) return $content;
-
-$post_id = get_the_ID();
+function weselny_menu_render($post_id){
 
 $user_id = get_post_meta($post_id,'user_id',true);
-if(!$user_id) return $content;
+if(!$user_id) return;
 
 $enabled = get_user_meta($user_id,'weselny_modul_menu',true);
-if(!$enabled) return $content;
+if(!$enabled) return;
 
 
 /* =========================
-   1. WIDOK MENU
+   WIDOK MENU
 ========================= */
 
 if(isset($_GET['menu'])){
 
 $data = get_post_meta($post_id,'weselny_menu',true);
 
-$html = '<p><a href="'.get_permalink().'">← Powrót</a></p>';
-$html .= '<h2>Menu weselne</h2>';
+echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>';
+echo '<h2>Menu weselne</h2>';
 
-if($data){
+if(!empty($data)){
 
 foreach($data as $section){
 
-$html .= '<h3>'.$section['title'].'</h3>';
-$html .= '<div>'.$section['content'].'</div><br>';
+$title = $section['title'] ?? '';
+$content = $section['content'] ?? '';
+
+echo '<h3>'.esc_html($title).'</h3>';
+echo '<div>'.$content.'</div><br>'; // WYSIWYG
 
 }
 
+}else{
+echo '<p>Brak menu</p>';
 }
 
-return $html;
+return;
 }
 
 
 /* =========================
-   2. BLOKADA (inne moduły)
+   BLOKADA
 ========================= */
 
 $active = weselny_get_active_module();
 
-if($active && $active !== 'quiz'){
-    return $content;
+if($active && $active !== 'menu'){
+return;
 }
 
 
 /* =========================
-   3. KAFEL
+   KAFEL
 ========================= */
 
-$url = add_query_arg('menu','1',get_permalink());
+$url = add_query_arg('menu','1',get_permalink($post_id));
 
-$html = '<div class="weselny-tile">';
-$html .= '<a href="'.$url.'">Menu</a>';
-$html .= '</div>';
-
-return $content.$html;
+echo '<div class="weselny-tile">';
+echo '<a href="'.esc_url($url).'">Menu</a>';
+echo '</div>';
 
 }
 
-add_filter('the_content','weselny_menu_guest');
+/* 🔥 NOWY SYSTEM */
+add_action('weselny_render_module_menu','weselny_menu_render');

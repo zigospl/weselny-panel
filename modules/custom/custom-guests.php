@@ -1,72 +1,74 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function weselny_custom_guest($content){
+/* =========================
+   RENDER MODUŁU
+========================= */
 
-if(get_post_type()!=='wesela' || !is_singular('wesela')) return $content;
-
-$post_id = get_the_ID();
+function weselny_custom_render($post_id){
 
 $data = get_post_meta($post_id,'weselny_custom_modules',true);
-
-if(!$data) return $content;
+if(!$data) return;
 
 
 /* =========================
-   WIDOK MODUŁU
+   WIDOK POJEDYNCZEJ SEKCJI
 ========================= */
 
 if(isset($_GET['custom_id'])){
 
 $i = intval($_GET['custom_id']);
 
-if(!isset($data[$i])) return $content;
+if(!isset($data[$i])) return;
 
 $mod = $data[$i];
 
-$html = '<p><a href="'.get_permalink().'">← Powrót</a></p>';
+echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>';
 
 if(!empty($mod['blocks'])){
+
 foreach($mod['blocks'] as $b){
 
 $type = $b['type'] ?? '';
 $value = $b['value'] ?? '';
 
 if($type=='h1'){
-$html .= '<h1>'.esc_html($value).'</h1>';
+echo '<h1>'.esc_html($value).'</h1>';
 }
 elseif($type=='h2'){
-$html .= '<h3>'.esc_html($value).'</h3>';
+echo '<h3>'.esc_html($value).'</h3>';
 }
 elseif($type=='text'){
-$html .= '<div>'.$value.'</div>';
+echo '<div>'.$value.'</div>'; // WYSIWYG
 }
 elseif($type=='img' && !empty($value)){
-$html .= '<img src="'.esc_url($value).'" style="width:100%;max-width:400px;display:block;margin-bottom:15px;">';
+echo '<img src="'.esc_url($value).'" style="width:100%;max-width:400px;display:block;margin-bottom:15px;">';
 }
 
 }
+
 }
 
-/* 🔥 KLUCZOWE — blokujemy inne moduły */
-return $html;
-
+return;
 }
 
 
 /* =========================
-   BLOKADA GLOBALNA (FIX)
+   🔥 KLUCZOWA BLOKADA GLOBALNA
 ========================= */
 
-/* jeśli jesteśmy w custom — nic więcej nie renderuj */
-if(isset($_GET['custom_id'])){
-    return $content;
-}
-
+/* jeśli JAKIKOLWIEK moduł jest otwarty → nie pokazuj custom */
 $active = weselny_get_active_module();
 
 if($active && $active !== 'custom'){
-    return $content;
+return;
+}
+
+
+/* dodatkowe zabezpieczenie:
+   jeśli jesteśmy w custom view → nie pokazuj kafelków innych */
+if(isset($_GET['custom_id'])){
+return;
 }
 
 
@@ -74,22 +76,19 @@ if($active && $active !== 'custom'){
    KAFELKI
 ========================= */
 
-$html = '';
-
 foreach($data as $i=>$mod){
 
-$title = !empty($mod['title']) ? $mod['title'] : 'Kafel '.($i+1);
+$title = !empty($mod['title']) ? $mod['title'] : 'Sekcja '.($i+1);
 
-$url = add_query_arg('custom_id',$i,get_permalink());
+$url = add_query_arg('custom_id',$i,get_permalink($post_id));
 
-$html .= '<div class="weselny-tile">';
-$html .= '<a href="'.$url.'">'.esc_html($title).'</a>';
-$html .= '</div>';
-
-}
-
-return $content.$html;
+echo '<div class="weselny-tile">';
+echo '<a href="'.esc_url($url).'">'.esc_html($title).'</a>';
+echo '</div>';
 
 }
 
-add_filter('the_content','weselny_custom_guest');
+}
+
+/* 🔥 NOWY SYSTEM */
+add_action('weselny_render_module_custom','weselny_custom_render');

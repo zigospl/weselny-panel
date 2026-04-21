@@ -2,17 +2,17 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function weselny_ksiega_guest($content){
+/* =========================
+   RENDER MODUŁU
+========================= */
 
-if(get_post_type()!=='wesela' || !is_singular('wesela')) return $content;
-
-$post_id = get_the_ID();
+function weselny_ksiega_render($post_id){
 
 $user_id = get_post_meta($post_id,'user_id',true);
-if(!$user_id) return $content;
+if(!$user_id) return;
 
 $enabled = get_user_meta($user_id,'weselny_modul_ksiega',true);
-if(!$enabled) return $content;
+if(!$enabled) return;
 
 
 /* =========================
@@ -59,13 +59,13 @@ if(isset($_GET['ksiega'])){
 $data = get_post_meta($post_id,'weselny_ksiega',true);
 if(!$data) $data = [];
 
-$html = '<p><a href="'.get_permalink().'">← Powrót</a></p>';
+echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>';
 
-$html .= '<h2>Księga gości</h2>';
+echo '<h2>Księga gości</h2>';
 
 /* FORM */
 
-$html .= '
+echo '
 <form method="post" enctype="multipart/form-data">
 
 <input type="text" name="name" placeholder="Twoje imię" required><br><br>
@@ -81,26 +81,29 @@ $html .= '
 <hr>
 ';
 
-/* POSTY */
+/* WPISY */
 
 foreach(array_reverse($data) as $entry){
 
-$html .= '<div style="border:1px solid #ccc;padding:15px;margin-bottom:15px;">';
+$name = $entry['name'] ?? '';
+$content = $entry['content'] ?? '';
+$img = $entry['img'] ?? '';
 
-$html .= '<strong>'.$entry['name'].'</strong><br><br>';
+echo '<div style="border:1px solid #ccc;padding:15px;margin-bottom:15px;">';
 
-$html .= $entry['content'].'<br>';
+echo '<strong>'.esc_html($name).'</strong><br><br>';
 
-if(!empty($entry['img'])){
-$html .= '<a href="'.$entry['img'].'"><img src="'.$entry['img'].'" style="width:120px;margin-top:10px;"></a>';
+echo $content.'<br>'; // WYSIWYG
+
+if(!empty($img)){
+echo '<a href="'.esc_url($img).'"><img src="'.esc_url($img).'" style="width:120px;margin-top:10px;"></a>';
 }
 
-$html .= '</div>';
+echo '</div>';
 
 }
 
-return $html;
-
+return;
 }
 
 
@@ -111,7 +114,7 @@ return $html;
 $active = weselny_get_active_module();
 
 if($active && $active !== 'ksiega'){
-return $content;
+return;
 }
 
 
@@ -119,14 +122,13 @@ return $content;
    KAFEL
 ========================= */
 
-$url = add_query_arg('ksiega','1',get_permalink());
+$url = add_query_arg('ksiega','1',get_permalink($post_id));
 
-$html = '<div class="weselny-tile">';
-$html .= '<a href="'.$url.'">Księga gości</a>';
-$html .= '</div>';
-
-return $content.$html;
+echo '<div class="weselny-tile">';
+echo '<a href="'.esc_url($url).'">Księga gości</a>';
+echo '</div>';
 
 }
 
-add_filter('the_content','weselny_ksiega_guest');
+/* 🔥 NOWY SYSTEM */
+add_action('weselny_render_module_ksiega','weselny_ksiega_render');

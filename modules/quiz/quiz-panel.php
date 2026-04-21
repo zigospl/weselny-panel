@@ -188,17 +188,11 @@ foreach($data as $i=>$q){
 
 echo '<div class="quiz-question" style="position:relative;">';
 
-echo '<button type="submit" name="delete_question" value="'.$i.'" style="
-position:absolute;
-top:0;
-right:0;
-background:red;
-color:#fff;
-">Usuń pytanie</button>';
+echo '<p class="delete-button"><button type="submit" name="delete_question" value="'.$i.'" style="">X</button></p>';
 
 echo '<h3>Pytanie '.($i+1).'</h3>';
 
-echo '<input type="text" name="question[]" value="'.esc_attr($q['question'] ?? '').'"><br><br>';
+echo '<input class="question-main" type="text" name="question[]" value="'.esc_attr($q['question'] ?? '').'"><br><br>';
 
 
 /* 🔥 ZAWSZE MIN 2 ODPOWIEDZI */

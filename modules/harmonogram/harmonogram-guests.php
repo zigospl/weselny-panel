@@ -4,17 +4,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-function weselny_harmonogram_guest($content){
+/* =========================
+   RENDER MODUŁU
+========================= */
 
-if(get_post_type()!=='wesela' || !is_singular('wesela')) return $content;
-
-$post_id = get_the_ID();
+function weselny_harmonogram_render($post_id){
 
 $user_id = get_post_meta($post_id,'user_id',true);
-if(!$user_id) return $content;
+if(!$user_id) return;
 
 $enabled = get_user_meta($user_id,'weselny_modul_harmonogram',true);
-if(!$enabled) return $content;
+if(!$enabled) return;
 
 
 /* =========================
@@ -25,50 +25,57 @@ if(isset($_GET['harmonogram'])){
 
 $data = get_post_meta($post_id,'weselny_harmonogram',true);
 
-$html = '<p><a href="'.get_permalink().'">← Powrót</a></p>';
-$html .= '<h2>Harmonogram</h2>';
+echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>';
+echo '<h2>Harmonogram</h2>';
 
-if($data){
+if(!empty($data)){
 
 foreach($data as $row){
 
-$html .= '<div style="margin-bottom:20px;">';
+$time = $row['time'] ?? '';
+$title = $row['title'] ?? '';
+$desc = $row['description'] ?? '';
 
-$html .= '<strong>'.$row['time'].'</strong><br>';
-$html .= '<h3>'.$row['title'].'</h3>';
-$html .= '<p>'.$row['description'].'</p>';
+echo '<div style="margin-bottom:20px;">';
 
-$html .= '</div>';
+echo '<strong>'.esc_html($time).'</strong><br>';
+echo '<h3>'.esc_html($title).'</h3>';
+echo '<p>'.$desc.'</p>'; // WYSIWYG
+
+echo '</div>';
 
 }
 
+}else{
+echo '<p>Brak harmonogramu</p>';
 }
 
-return $html;
+return;
 }
 
 
 /* =========================
    BLOKADA
 ========================= */
+
 $active = weselny_get_active_module();
 
 if($active && $active !== 'harmonogram'){
-    return $content;
+return;
 }
+
 
 /* =========================
    KAFEL
 ========================= */
 
-$url = add_query_arg('harmonogram','1',get_permalink());
+$url = add_query_arg('harmonogram','1',get_permalink($post_id));
 
-$html = '<div class="weselny-tile">';
-$html .= '<a href="'.$url.'">Harmonogram</a>';
-$html .= '</div>';
-
-return $content.$html;
+echo '<div class="weselny-tile">';
+echo '<a href="'.esc_url($url).'">Harmonogram</a>';
+echo '</div>';
 
 }
 
-add_filter('the_content','weselny_harmonogram_guest');
+/* 🔥 NOWY SYSTEM */
+add_action('weselny_render_module_harmonogram','weselny_harmonogram_render');

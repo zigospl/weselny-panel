@@ -15,9 +15,16 @@ require_once plugin_dir_path(__FILE__) . 'panel-gosci.php';
 
 
 /**
+ * 🔥 GENERATOR KODU
+ */
+function weselny_generate_code($length = 7){
+    return substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, $length);
+}
+
+
+/**
  * Rejestracja CPT Wesela
  */
-
 function wp_weselny_panel_register_cpt() {
 
     register_post_type( 'wesela', array(
@@ -36,14 +43,12 @@ function wp_weselny_panel_register_cpt() {
     ));
 
 }
-
 add_action( 'init', 'wp_weselny_panel_register_cpt' );
 
 
 /**
- * Tworzenie wpisu wesela po zakupie
+ * 🔥 Tworzenie wpisu wesela (LOSOWY SLUG)
  */
-
 function wp_weselny_panel_create_wedding_post( $order_id ) {
 
     $order = wc_get_order( $order_id );
@@ -62,11 +67,18 @@ function wp_weselny_panel_create_wedding_post( $order_id ) {
 
             if ( ! $existing ) {
 
+                /* 🔥 GENERUJEMY UNIKALNY KOD */
+                do {
+                    $code = weselny_generate_code();
+                    $exists = get_page_by_path($code, OBJECT, 'wesela');
+                } while($exists);
+
                 $post_id = wp_insert_post(array(
-                    'post_type' => 'wesela',
+                    'post_type'   => 'wesela',
                     'post_status' => 'publish',
-                    'post_title' => 'Wesele użytkownika ' . $user_id,
-                    'post_content' => '',
+                    'post_title'  => $code,
+                    'post_name'   => $code, // 🔥 slug = kod
+                    'post_content'=> '',
                 ));
 
                 update_post_meta( $post_id, 'user_id', $user_id );
@@ -78,7 +90,6 @@ function wp_weselny_panel_create_wedding_post( $order_id ) {
     }
 
 }
-
 add_action( 'woocommerce_order_status_processing', 'wp_weselny_panel_create_wedding_post' );
 add_action( 'woocommerce_order_status_completed', 'wp_weselny_panel_create_wedding_post' );
 
@@ -86,7 +97,6 @@ add_action( 'woocommerce_order_status_completed', 'wp_weselny_panel_create_weddi
 /**
  * Loader modułów
  */
-
 $modules = plugin_dir_path(__FILE__) . 'modules/*';
 
 foreach ( glob($modules) as $module ) {
@@ -101,55 +111,76 @@ foreach ( glob($modules) as $module ) {
 
 }
 
+
+/**
+ * STYLE
+ */
 function weselny_panel_styles(){
 
-wp_enqueue_style(
-    'weselny-style',
-    plugin_dir_url(__FILE__) . 'assets/css/style.css',
-    [],
-    '1.0'
-);
+    wp_enqueue_style(
+        'weselny-style',
+        plugin_dir_url(__FILE__) . 'assets/css/style.css',
+        [],
+        '1.0'
+    );
 
 }
-
 add_action('wp_enqueue_scripts','weselny_panel_styles');
 
+
+/**
+ * PARTICLES
+ */
 function weselny_particles_scripts(){
 
-if(get_post_type() === 'wesela' && is_singular('wesela')){
+    if(get_post_type() === 'wesela' && is_singular('wesela')){
 
-wp_enqueue_script(
-    'particles-js',
-    'https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js',
-    [],
-    null,
-    true
-);
+        wp_enqueue_script(
+            'particles-js',
+            'https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js',
+            [],
+            null,
+            true
+        );
 
-wp_enqueue_script(
-    'weselny-particles-init',
-    plugin_dir_url(__FILE__) . 'assets/js/particles-init.js',
-    ['particles-js'],
-    '1.0',
-    true
-);
+        wp_enqueue_script(
+            'weselny-particles-init',
+            plugin_dir_url(__FILE__) . 'assets/js/particles-init.js',
+            ['particles-js'],
+            '1.0',
+            true
+        );
+
+        wp_enqueue_script(
+            'weselny-slide',
+            plugin_dir_url(__FILE__) . 'assets/js/slide.js',
+            [],
+            '1.0',
+            true
+        );
+
+    }
 
 }
-
-}
-
 add_action('wp_enqueue_scripts','weselny_particles_scripts');
 
+
+/**
+ * 🔥 AKTYWNY MODUŁ
+ */
 function weselny_get_active_module(){
 
-$modules = ['stoly','galeria','menu','harmonogram','quiz','zadania','custom','ksiega'];
-
-foreach($modules as $m){
-    if(isset($_GET[$m])){
-        return $m;
+    if(!empty($_GET['custom_id'])){
+        return 'custom';
     }
-}
 
-return false;
+    $modules = ['stoly','galeria','menu','harmonogram','quiz','zadania','ksiega'];
 
+    foreach($modules as $m){
+        if(!empty($_GET[$m])){
+            return $m;
+        }
+    }
+
+    return false;
 }

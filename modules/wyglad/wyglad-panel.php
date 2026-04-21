@@ -113,12 +113,12 @@ echo '<button name="usun_banner">Usuń banner</button><br><br>';
 echo '<input type="file" name="banner_file"><br><br>';
 
 /* TEKSTY */
-
+echo '<div class="wyglad-inputs">';
 echo '<input type="text" name="naglowek" placeholder="Nagłówek" value="'.esc_attr($data['naglowek'] ?? '').'"><br><br>';
 echo '<input type="text" name="podpis" placeholder="Podpis" value="'.esc_attr($data['podpis'] ?? '').'"><br><br>';
 echo '<input type="text" name="kosciol" placeholder="Kościół" value="'.esc_attr($data['kosciol'] ?? '').'"><br><br>';
 echo '<input type="text" name="miejsce" placeholder="Miejsce wesela" value="'.esc_attr($data['miejsce'] ?? '').'"><br><br>';
-
+echo '</div>';
 echo '<button name="zapisz_wyglad">Zapisz</button>';
 
 echo '</form>';

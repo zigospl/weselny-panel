@@ -4,17 +4,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-function weselny_quiz_guest($content){
+/* =========================
+   RENDER MODUŁU
+========================= */
 
-if(get_post_type()!=='wesela' || !is_singular('wesela')) return $content;
-
-$post_id = get_the_ID();
+function weselny_quiz_render($post_id){
 
 $user_id = get_post_meta($post_id,'user_id',true);
-if(!$user_id) return $content;
+if(!$user_id) return;
 
 $enabled = get_user_meta($user_id,'weselny_modul_quiz',true);
-if(!$enabled) return $content;
+if(!$enabled) return;
 
 
 /* =========================
@@ -26,7 +26,10 @@ if(isset($_GET['quiz'])){
 $data = get_post_meta($post_id,'weselny_quiz',true);
 $settings = get_post_meta($post_id,'weselny_quiz_settings',true);
 
-if(!$data) return '<p>Brak quizu</p>';
+if(!$data){
+echo '<p>Brak quizu</p>';
+return;
+}
 
 /* losowość */
 if(!empty($settings['random'])){
@@ -40,8 +43,8 @@ $data = array_slice($data,0,$settings['limit']);
 
 $json = json_encode($data);
 
-$html = '
-<p><a href="'.get_permalink().'">← Powrót</a></p>
+echo '
+<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>
 
 <div id="quiz-app"></div>
 
@@ -182,7 +185,7 @@ render();
 </script>
 ';
 
-return $html;
+return;
 }
 
 
@@ -193,7 +196,7 @@ return $html;
 $active = weselny_get_active_module();
 
 if($active && $active !== 'quiz'){
-    return $content;
+return;
 }
 
 
@@ -201,14 +204,13 @@ if($active && $active !== 'quiz'){
    KAFEL
 ========================= */
 
-$url = add_query_arg('quiz','1',get_permalink());
+$url = add_query_arg('quiz','1',get_permalink($post_id));
 
-$html = '<div class="weselny-tile">';
-$html .= '<a href="'.$url.'">Quiz</a>';
-$html .= '</div>';
-
-return $content.$html;
+echo '<div class="weselny-tile">';
+echo '<a href="'.esc_url($url).'">Quiz</a>';
+echo '</div>';
 
 }
 
-add_filter('the_content','weselny_quiz_guest');
+/* 🔥 NOWY SYSTEM */
+add_action('weselny_render_module_quiz','weselny_quiz_render');

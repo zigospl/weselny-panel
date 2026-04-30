@@ -15,7 +15,6 @@ $enabled = get_user_meta(get_current_user_id(),'weselny_modul_ksiega',true);
 
 <label>
 <input type="checkbox" name="ksiega_enabled" <?php checked($enabled,1); ?>>
-
 </label>
 
 <hr>
@@ -102,26 +101,112 @@ update_post_meta($post_id,'weselny_ksiega',$data);
 }
 
 
+/* STYLE */
+
+echo '
+<style>
+.ksiega-empty{
+text-align:center;
+padding:40px 20px;
+border:2px dashed #ddd;
+border-radius:12px;
+color:#666;
+margin-top:20px;
+background:#fafafa;
+}
+
+.ksiega-card{
+border:1px solid #ddd;
+padding:20px;
+margin-bottom:15px;
+border-radius:12px;
+background:#fff;
+box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+.ksiega-card strong{
+font-size:16px;
+}
+
+.ksiega-img-link{
+display:inline-block;
+margin-top:10px;
+}
+
+.ksiega-img-link img{
+width:120px;
+border-radius:8px;
+cursor:zoom-in;
+transition:0.2s;
+}
+
+.ksiega-img-link img:hover{
+transform:scale(1.05);
+}
+
+.ksiega-delete{
+margin-top:10px;
+background:#e74c3c;
+color:#fff;
+border:none;
+padding:8px 12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.ksiega-delete:hover{
+background:#c0392b;
+}
+</style>
+';
+
+
 /* WYŚWIETLANIE */
 
 echo '<h2>Księga gości</h2>';
 echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót</a></p>';
 
+
+/* EMPTY STATE */
+
+if(empty($data)){
+
+echo '
+<div class="ksiega-empty">
+<p style="font-size:20px;margin-bottom:10px;">💌</p>
+<p><strong>Tu pojawią się wpisy od Waszych gości</strong></p>
+<p style="margin-top:10px;">
+Gdy goście zaczną dodawać życzenia i zdjęcia,
+zobaczysz je właśnie w tym miejscu.
+</p>
+</div>
+';
+
+return;
+}
+
+
+/* LISTA WPISÓW */
+
 foreach($data as $i=>$entry){
 
-echo '<div style="border:1px solid #ccc;padding:15px;margin-bottom:15px;">';
+echo '<div class="ksiega-card">';
 
-echo '<strong>'.$entry['name'].'</strong><br><br>';
+echo '<strong>'.esc_html($entry['name']).'</strong><br><br>';
 
-echo $entry['content'].'<br>';
+echo wp_kses_post($entry['content']).'<br>';
 
 if(!empty($entry['img'])){
-echo '<img src="'.$entry['img'].'" style="width:120px;margin-top:10px;"><br>';
+echo '
+<a href="'.esc_url($entry['img']).'" class="ksiega-img-link" target="_blank" rel="noopener">
+<img src="'.esc_url($entry['img']).'">
+</a>
+';
 }
 
 echo '<form method="post">';
 echo '<input type="hidden" name="index" value="'.$i.'">';
-echo '<button name="usun">Usuń</button>';
+echo '<button name="usun" class="ksiega-delete">Usuń</button>';
 echo '</form>';
 
 echo '</div>';

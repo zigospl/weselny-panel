@@ -20,10 +20,13 @@
       padding: 15px;
     }
 
+    
+
     .weselny-tile {
       display:block;
       width: 90%;
-      text-align: center;      
+      text-align: center;    
+      margin: auto;  
       margin-bottom: 10px;
       a {
       color:#000;
@@ -35,7 +38,6 @@
       transition: 300ms ease;
 
         &:hover {
-          background-color: #192e03;
           color: #fff;
         }
       }
@@ -55,6 +57,9 @@
     }
   }
 
+  .main-h2 {
+    font-weight: 500 !important;
+  }
   
   .section-title-input{
     border-width: 0px 0px 1px 0px;
@@ -157,3 +162,9 @@
     background-color: #192e03;
   }
 
+.weselny-slide {
+  padding: 10px;
+  textarea{
+    box-shadow: none;
+  }
+}

@@ -54,7 +54,6 @@ select[name=type] {
   transform: translate(-50%, -50%);
   color: #fff;
   text-align: center;
-  background: rgba(0, 0, 0, 0.4);
   padding: 0px;
   width: 100%;
   height: 100%;
@@ -86,7 +85,6 @@ select[name=type] {
   transform: translate(-50%, -50%);
   color: #fff;
   text-align: center;
-  background: rgba(0, 0, 0, 0.4);
   padding: 20px;
   z-index: 2;
 }
@@ -253,6 +251,7 @@ body .weselny-tile {
   display: block;
   width: 90%;
   text-align: center;
+  margin: auto;
   margin-bottom: 10px;
 }
 body .weselny-tile a {
@@ -265,7 +264,6 @@ body .weselny-tile a {
   transition: 300ms ease;
 }
 body .weselny-tile a:hover {
-  background-color: #192e03;
   color: #fff;
 }
 
@@ -277,6 +275,10 @@ body .weselny-tile a:hover {
     margin-right: 10px;
   }
 }
+.main-h2 {
+  font-weight: 500 !important;
+}
+
 .section-title-input {
   border-width: 0px 0px 1px 0px;
   width: 100%;
@@ -376,6 +378,13 @@ label :focus:not(.focus-visible) {
 
 input[type=checkbox]:checked:hover {
   background-color: #192e03;
+}
+
+.weselny-slide {
+  padding: 10px;
+}
+.weselny-slide textarea {
+  box-shadow: none;
 }
 
 /*# sourceMappingURL=style.css.map */

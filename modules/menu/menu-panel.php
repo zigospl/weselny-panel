@@ -118,23 +118,13 @@ $saved = true;
    UI
 ========================= */
 
+echo '<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">';
+echo '<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>';
+
 echo '<h2>Menu weselne</h2>';
 echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót</a></p>';
 
-echo '<div id="weselny-save-msg" style="
-display:none;
-background:#d4edda;
-color:#155724;
-padding:10px 15px;
-margin-bottom:15px;
-border-radius:6px;
-font-weight:500;
-">
-Zapisano
-</div>';
-
-echo '<form method="post">';
-
+echo '<form method="post" id="menu-form">';
 echo '<div id="menu-sections">';
 
 foreach($data as $i=>$section){
@@ -145,18 +135,10 @@ echo '<h3>Sekcja '.($i+1).'</h3>';
 
 echo '<input class="text-input-block" type="text" name="sections['.$i.'][title]" value="'.esc_attr($section['title']).'" placeholder="Nagłówek"><br><br>';
 
-wp_editor(
-$section['content'],
-'content_'.$i,
-[
-'textarea_name'=>'sections['.$i.'][content]',
-'textarea_rows'=>5
-]
-);
+echo '<div class="quill-editor">'.$section['content'].'</div>';
+echo '<input type="hidden" class="quill-value" name="sections['.$i.'][content]" value="'.esc_attr($section['content']).'">';
 
-echo '<br>';
-
-echo '<button type="button" class="remove-section">Usuń</button>';
+echo '<br><button type="button" class="remove-section">Usuń</button>';
 
 echo '</div>';
 
@@ -165,67 +147,79 @@ echo '</div>';
 echo '</div>';
 
 echo '<button type="button" id="add-section">+ Dodaj sekcję</button><br><br>';
-
-echo '<button name="save_all" style="font-size:16px;padding:10px 20px;">Zapisz</button>';
+echo '<button name="save_all">Zapisz</button>';
 
 echo '</form>';
 ?>
 
 <script>
 
+/* INIT QUILL */
+function initQuill(container){
+container.querySelectorAll(".quill-editor").forEach(el=>{
+
+if(el.classList.contains("init")) return;
+
+let hidden = el.nextElementSibling;
+
+let q = new Quill(el,{theme:"snow"});
+
+q.root.innerHTML = hidden.value;
+
+q.on("text-change",()=>{
+hidden.value = q.root.innerHTML;
+});
+
+el.classList.add("init");
+
+});
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+initQuill(document);
+});
+
+
 let sectionIndex = <?php echo count($data); ?>;
 
+
+/* ADD */
 document.getElementById("add-section").addEventListener("click", function(){
 
-    let container = document.getElementById("menu-sections");
+let container = document.getElementById("menu-sections");
 
-    let div = document.createElement("div");
-    div.className = "menu-section";
-    div.style = "border:1px solid #ccc;padding:15px;margin-bottom:20px;";
+let div = document.createElement("div");
+div.className = "menu-section";
+div.style = "border:1px solid #ccc;padding:15px;margin-bottom:20px;";
 
-    div.innerHTML = `
-        <h3>Sekcja ${sectionIndex + 1}</h3>
+div.innerHTML = `
+<h3>Sekcja ${sectionIndex + 1}</h3>
 
-        <input class="text-input-block" type="text" name="sections[${sectionIndex}][title]" placeholder="Nagłówek"><br><br>
+<input class="text-input-block" type="text" name="sections[${sectionIndex}][title]" placeholder="Nagłówek"><br><br>
 
-        <textarea name="sections[${sectionIndex}][content]" rows="5"></textarea><br>
+<div class="quill-editor"></div>
+<input type="hidden" class="quill-value" name="sections[${sectionIndex}][content]">
 
-        <button type="button" class="remove-section">Usuń</button>
-    `;
+<br><button type="button" class="remove-section">Usuń</button>
+`;
 
-    container.appendChild(div);
+container.appendChild(div);
 
-    sectionIndex++;
+initQuill(div);
+
+sectionIndex++;
+
 });
 
 
+/* REMOVE */
 document.addEventListener("click", function(e){
 
-    if(e.target.classList.contains("remove-section")){
-        e.target.closest(".menu-section").remove();
-    }
+if(e.target.classList.contains("remove-section")){
+e.target.closest(".menu-section").remove();
+}
 
 });
-
-
-<?php if($saved): ?>
-
-document.addEventListener("DOMContentLoaded", function(){
-    const msg = document.getElementById("weselny-save-msg");
-
-    msg.style.display = "block";
-    msg.style.opacity = "0";
-    msg.style.transition = "opacity 0.3s";
-
-    setTimeout(()=>{ msg.style.opacity = "1"; }, 50);
-
-    setTimeout(()=>{
-        msg.style.opacity = "0";
-        setTimeout(()=>{ msg.style.display = "none"; }, 300);
-    }, 2000);
-});
-
-<?php endif; ?>
 
 </script>
 

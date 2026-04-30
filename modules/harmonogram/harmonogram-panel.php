@@ -119,23 +119,13 @@ $saved = true;
    UI
 ========================= */
 
+echo '<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">';
+echo '<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>';
+
 echo '<h2>Harmonogram</h2>';
 echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót</a></p>';
 
-echo '<div id="weselny-save-msg" style="
-display:none;
-background:#d4edda;
-color:#155724;
-padding:10px 15px;
-margin-bottom:15px;
-border-radius:6px;
-font-weight:500;
-">
-Zapisano
-</div>';
-
-echo '<form method="post">';
-
+echo '<form method="post" id="harmonogram-form">';
 echo '<div id="harmonogram-items">';
 
 foreach($data as $i=>$row){
@@ -146,19 +136,12 @@ echo '<h3>Pozycja '.($i+1).'</h3>';
 
 echo '<input class="text-input-block" type="text" name="rows['.$i.'][title]" value="'.esc_attr($row['title']).'" placeholder="Nagłówek"><br><br>';
 
-echo '<input class="text-input-block" type="text" name="rows['.$i.'][time]" value="'.esc_attr($row['time']).'" placeholder="Czas (np. 16:00)"><br><br>';
+echo '<input class="text-input-block" type="text" name="rows['.$i.'][time]" value="'.esc_attr($row['time']).'" placeholder="Czas"><br><br>';
 
-wp_editor(
-    $row['description'],
-    'desc_'.$i,
-    [
-        'textarea_name' => 'rows['.$i.'][description]',
-        'textarea_rows' => 5
-    ]
-);
+echo '<div class="quill-editor">'.$row['description'].'</div>';
+echo '<input type="hidden" class="quill-value" name="rows['.$i.'][description]" value="'.esc_attr($row['description']).'">';
 
-echo '<br>';
-echo '<button type="button" class="remove-item">Usuń</button>';
+echo '<br><button type="button" class="remove-item">Usuń</button>';
 
 echo '</div>';
 
@@ -167,72 +150,81 @@ echo '</div>';
 echo '</div>';
 
 echo '<button type="button" id="add-item">+ Dodaj pozycję</button><br><br>';
-
-echo '<button name="save_all" style="font-size:16px;padding:10px 20px;">Zapisz</button>';
+echo '<button name="save_all">Zapisz</button>';
 
 echo '</form>';
 ?>
 
 <script>
 
+/* INIT QUILL */
+function initQuill(container){
+container.querySelectorAll(".quill-editor").forEach(el=>{
+
+if(el.classList.contains("init")) return;
+
+let hidden = el.nextElementSibling;
+
+let q = new Quill(el,{theme:"snow"});
+
+q.root.innerHTML = hidden.value;
+
+q.on("text-change",()=>{
+hidden.value = q.root.innerHTML;
+});
+
+el.classList.add("init");
+
+});
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+initQuill(document);
+});
+
+
 let index = <?php echo count($data); ?>;
 
-/* DODAWANIE */
+
+/* ADD */
 document.getElementById("add-item").addEventListener("click", function(){
 
-    let container = document.getElementById("harmonogram-items");
+let container = document.getElementById("harmonogram-items");
 
-    let div = document.createElement("div");
-    div.className = "harmonogram-item";
-    div.style = "border:1px solid #ccc;padding:15px;margin-bottom:20px;";
+let div = document.createElement("div");
+div.className = "harmonogram-item";
+div.style = "border:1px solid #ccc;padding:15px;margin-bottom:20px;";
 
-    div.innerHTML = `
-        <h3>Pozycja ${index + 1}</h3>
+div.innerHTML = `
+<h3>Pozycja ${index + 1}</h3>
 
-        <input class="text-input-block" type="text" name="rows[${index}][title]" placeholder="Nagłówek"><br><br>
+<input class="text-input-block" type="text" name="rows[${index}][title]" placeholder="Nagłówek"><br><br>
 
-        <input class="text-input-block" type="text" name="rows[${index}][time]" placeholder="Czas (np. 16:00)"><br><br>
+<input class="text-input-block" type="text" name="rows[${index}][time]" placeholder="Czas"><br><br>
 
-        <textarea name="rows[${index}][description]" rows="5"></textarea><br>
+<div class="quill-editor"></div>
+<input type="hidden" class="quill-value" name="rows[${index}][description]">
 
-        <button type="button" class="remove-item">Usuń</button>
-    `;
+<br><button type="button" class="remove-item">Usuń</button>
+`;
 
-    container.appendChild(div);
+container.appendChild(div);
 
-    index++;
+initQuill(div);
+
+index++;
+
 });
 
 
-/* USUWANIE */
+/* REMOVE */
 document.addEventListener("click", function(e){
 
-    if(e.target.classList.contains("remove-item")){
-        e.target.closest(".harmonogram-item").remove();
-    }
+if(e.target.classList.contains("remove-item")){
+e.target.closest(".harmonogram-item").remove();
+}
 
 });
-
-
-/* KOMUNIKAT */
-<?php if($saved): ?>
-
-document.addEventListener("DOMContentLoaded", function(){
-    const msg = document.getElementById("weselny-save-msg");
-
-    msg.style.display = "block";
-    msg.style.opacity = "0";
-    msg.style.transition = "opacity 0.3s";
-
-    setTimeout(()=>{ msg.style.opacity = "1"; }, 50);
-
-    setTimeout(()=>{
-        msg.style.opacity = "0";
-        setTimeout(()=>{ msg.style.display = "none"; }, 300);
-    }, 2000);
-});
-
-<?php endif; ?>
 
 </script>
 

@@ -47,7 +47,7 @@ add_action( 'init', 'wp_weselny_panel_register_cpt' );
 
 
 /**
- * 🔥 Tworzenie wpisu wesela (LOSOWY SLUG)
+ * 🔥 Tworzenie wpisu wesela
  */
 function wp_weselny_panel_create_wedding_post( $order_id ) {
 
@@ -67,7 +67,6 @@ function wp_weselny_panel_create_wedding_post( $order_id ) {
 
             if ( ! $existing ) {
 
-                /* 🔥 GENERUJEMY UNIKALNY KOD */
                 do {
                     $code = weselny_generate_code();
                     $exists = get_page_by_path($code, OBJECT, 'wesela');
@@ -77,7 +76,7 @@ function wp_weselny_panel_create_wedding_post( $order_id ) {
                     'post_type'   => 'wesela',
                     'post_status' => 'publish',
                     'post_title'  => $code,
-                    'post_name'   => $code, // 🔥 slug = kod
+                    'post_name'   => $code,
                     'post_content'=> '',
                 ));
 
@@ -184,3 +183,57 @@ function weselny_get_active_module(){
 
     return false;
 }
+
+
+/**
+ * 🎨 DYNAMICZNY WYGLĄD
+ */
+function weselny_wyglad_css(){
+
+if(!is_singular('wesela')) return;
+
+global $post;
+
+$user_id = get_post_meta($post->ID,'user_id',true);
+if(!$user_id) return;
+
+$data = get_user_meta($user_id,'weselny_wyglad',true);
+if(!$data) return;
+
+$primary = $data['color_primary'] ?? '';
+$tile = $data['color_tile'] ?? '';
+$tile_hover = $data['color_tile_hover'] ?? '';
+$text = $data['color_text'] ?? '';
+$headings = $data['color_headings'] ?? '';
+
+echo '<style>';
+
+/* tło */
+if($primary){
+echo "body.single-wesela { background: {$primary}; }";
+}
+
+/* kafelki */
+if($tile){
+echo ".weselny-tile a { background: {$tile}; color:#fff; transition:0.3s; }";
+}
+
+/* hover */
+if($tile_hover){
+echo ".weselny-tile a:hover, .h-item::before, .ks-form button, .z-bar-fill, .z-main, .q-main { background: {$tile_hover} !important; }";
+}
+
+/* tekst */
+if($text){
+echo "body.single-wesela, body.single-wesela p { color: {$text}; }";
+}
+
+/* nagłówki */
+if($headings){
+echo "h1, h2, h3, h4, h5 { color: {$headings}; }";
+}
+
+echo '</style>';
+
+}
+add_action('wp_head','weselny_wyglad_css');

@@ -21,39 +21,118 @@ function wp_weselny_panel_gosci_content( $content ) {
         $kosciol = $data['kosciol'] ?? '';
         $miejsce = $data['miejsce'] ?? '';
 
+        /* 🔥 PARTICLES FLAG */
+        $particles_enabled = $data['particles_enabled'] ?? 1;
+
+        /* =========================
+           STYLE
+        ========================= */
+
+        $style = '
+        <style>
+
+        .weselny-banner{
+            position:relative;
+            height:300px;
+            overflow:hidden;
+            margin-bottom:20px;
+        }
+
+        .weselny-banner img{
+            width:100%;
+            height:100%;
+            object-fit:cover;
+        }
+
+        /* 🔥 GRADIENT OVERLAY */
+        .weselny-banner::after{
+            content:"";
+            position:absolute;
+            left:0;
+            right:0;
+            bottom:0;
+            height:50%;
+            background:linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0));
+        }
+
+        /* CONTENT */
+        .weselny-banner-content{
+            position:absolute;
+            bottom:15px;
+            left:15px;
+            right:15px;
+            z-index:2;
+        }
+
+        .weselny-banner-content h2{
+            margin:0 0 5px;
+            font-size:20px;
+            font-weight:700;
+        }
+
+        .weselny-banner-content p{
+            margin:2px 0;
+            font-size:13px;
+            color:#444;
+        }
+
+        /* PARTICLES */
+        #weselny-particles{
+            position:absolute;
+            inset:0;
+            z-index:1;
+            pointer-events:none;
+        }
+
+        @media(max-width:480px){
+
+            .weselny-banner{
+                height:220px;
+            }
+
+            .weselny-banner-content h2{
+                font-size:18px;
+            }
+
+        }
+
+        </style>
+        ';
+
         /* =========================
            BANNER
         ========================= */
 
         $banner_html = '
+        '.$style.'
         <div class="weselny-banner">
             <img src="'.esc_url($banner).'">
+
+            '.($particles_enabled ? '<div id="weselny-particles"></div>' : '').'
+
             <div class="weselny-banner-content">
-                <h2>'.esc_html($naglowek).'</h2>
-                <p>'.esc_html($podpis).'</p>
-                <p>'.esc_html($kosciol).'</p>
-                <p>'.esc_html($miejsce).'</p>
+                <h2 class="main-h2">'.esc_html($naglowek).'</h2>
+                '.($podpis ? '<p>'.esc_html($podpis).'</p>' : '').'
+                '.($kosciol ? '<p>'.esc_html($kosciol).'</p>' : '').'
+                '.($miejsce ? '<p>'.esc_html($miejsce).'</p>' : '').'
             </div>
-            <div id="weselny-particles"></div>
         </div>
         ';
 
         /* =========================
-           🔥 LABELKI
+           RESZTA (bez zmian)
         ========================= */
 
         $labels = get_post_meta($post_id,'weselny_module_labels',true);
         if(!is_array($labels)) $labels = [];
 
-        /* =========================
-           🔥 AKTYWNY MODUŁ
-        ========================= */
-
         $active = weselny_get_active_module();
 
-        /* =========================
-           CUSTOM VIEW
-        ========================= */
+        if(isset($_GET['custom'])){
+            $active = 'custom';
+        }
+
+        /* CUSTOM VIEW */
 
         if($active === 'custom' && isset($_GET['custom_id'])){
 
@@ -97,9 +176,7 @@ function wp_weselny_panel_gosci_content( $content ) {
             }
         }
 
-        /* =========================
-           KOLEJNOŚĆ
-        ========================= */
+        /* KOLEJNOŚĆ */
 
         $order = get_post_meta($post_id,'weselny_module_order',true);
         $custom_modules = get_post_meta($post_id,'weselny_custom_modules',true);
@@ -111,20 +188,14 @@ function wp_weselny_panel_gosci_content( $content ) {
 
         foreach($order as $module){
 
-            /* 🔥 BLOKADA */
             if($active){
 
                 if($active === 'custom' && strpos($module,'custom_') === 0){
-                    // OK
                 }
                 elseif($active !== $module){
                     continue;
                 }
             }
-
-            /* =========================
-               CUSTOM
-            ========================= */
 
             if(strpos($module,'custom_') === 0){
 
@@ -137,20 +208,19 @@ function wp_weselny_panel_gosci_content( $content ) {
 
                     $title = !empty($labels[$key]) ? $labels[$key] : $default;
 
+                    $url = add_query_arg([
+                        'custom' => 1,
+                        'custom_id' => $index
+                    ], get_permalink());
+
                     $output .= '<div class="weselny-tile">';
-                    $output .= '<a href="'.esc_url(add_query_arg('custom_id',$index,get_permalink())).'">';
+                    $output .= '<a href="'.esc_url($url).'">';
                     $output .= esc_html($title);
                     $output .= '</a>';
                     $output .= '</div>';
                 }
 
-            }
-
-            /* =========================
-               STANDARD
-            ========================= */
-
-            else{
+            } else {
 
                 ob_start();
                 do_action('weselny_render_module_'.$module, $post_id);
@@ -158,7 +228,6 @@ function wp_weselny_panel_gosci_content( $content ) {
 
                 if(!empty(trim($module_html))){
 
-                    /* 🔥 PODMIANA NAZWY */
                     if(!empty($labels[$module]) && strpos($module_html,'weselny-tile') !== false){
 
                         $new_label = esc_html($labels[$module]);
@@ -175,10 +244,6 @@ function wp_weselny_panel_gosci_content( $content ) {
                 }
             }
         }
-
-        /* =========================
-           FINAL
-        ========================= */
 
         return '
         <div class="weselny-main-content">

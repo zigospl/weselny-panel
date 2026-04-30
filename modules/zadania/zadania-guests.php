@@ -4,10 +4,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-/* =========================
-   RENDER MODUŁU
-========================= */
-
 function weselny_zadania_render($post_id){
 
 $user_id = get_post_meta($post_id,'user_id',true);
@@ -18,7 +14,7 @@ if(!$enabled) return;
 
 
 /* =========================
-   UPLOAD (AJAX bez ajaxa 😄)
+   UPLOAD
 ========================= */
 
 if(isset($_FILES['photo'])){
@@ -68,26 +64,107 @@ exit;
 
 if(isset($_GET['zadania'])){
 
-$data = get_post_meta($post_id,'weselny_zadania',true);
+$tasks = get_post_meta($post_id,'weselny_zadania',true);
 $text = get_post_meta($post_id,'weselny_zadania_text',true);
 $photos = get_user_meta($user_id,'weselny_zadania_photos',true);
 
-if(!$data){
+$random = get_post_meta($post_id,'weselny_zadania_random',true);
+$count = intval(get_post_meta($post_id,'weselny_zadania_count',true));
+
+if(!$tasks){
 echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>';
 echo '<p>Brak zadań</p>';
 return;
 }
 
-$json = json_encode(array_values($data));
+$tasks = array_values($tasks);
+$json = json_encode($tasks);
 
 echo '
+
+<style>
+#zadania-app{
+max-width:500px;
+margin:0 auto;
+font-family:Arial;
+}
+
+.z-card{
+background:#fff;
+border-radius:16px;
+padding:25px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+margin-top:20px;
+text-align:center;
+}
+
+.z-task{
+font-size:22px;
+font-weight:600;
+margin-bottom:20px;
+}
+
+.z-btn{
+display:block;
+width:100%;
+padding:14px;
+border:none;
+border-radius:10px;
+font-size:16px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.z-main{
+background:#1a3d1a;
+color:#fff;
+}
+
+.z-skip{
+background:#aaa;
+}
+
+.z-progress{
+margin-bottom:15px;
+font-size:14px;
+color:#666;
+}
+
+.z-bar{
+height:8px;
+background:#eee;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:15px;
+}
+
+.z-bar-fill{
+height:100%;
+background:#1a3d1a;
+width:0%;
+}
+
+#preview img{
+width:120px;
+height:120px;
+object-fit:cover;
+border-radius:10px;
+margin-top:10px;
+}
+</style>
+
 <p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>
 
 <div id="zadania-app"></div>
 
 <script>
 
-let tasks = '.$json.';
+let baseTasks = '.$json.';
+
+let RANDOM_MODE = '.($random ? 'true' : 'false').';
+let TASK_COUNT = '.$count.';
+
+/* DEVICE */
 let device_id = localStorage.getItem("weselny_device_id");
 
 if(!device_id){
@@ -96,96 +173,159 @@ localStorage.setItem("weselny_device_id", device_id);
 }
 
 /* STORAGE */
-
 let storageKey = "weselny_tasks_" + device_id;
 
 let saved = localStorage.getItem(storageKey);
 
-let used = [];
+let queue = [];
 let completed = 0;
+let skipped = 0;
+let totalCount = 0;
 
 if(saved){
-    try{
-        let parsed = JSON.parse(saved);
-        used = parsed.used || [];
-        completed = parsed.completed || 0;
-    }catch(e){}
+try{
+let parsed = JSON.parse(saved);
+queue = parsed.queue || [];
+completed = parsed.completed || 0;
+skipped = parsed.skipped || 0;
+totalCount = parsed.total || (queue.length + completed + skipped);
+}catch(e){}
 }
 
-function saveProgress(){
-    localStorage.setItem(storageKey, JSON.stringify({
-        used: used,
-        completed: completed
-    }));
+/* SHUFFLE */
+function shuffle(arr){
+for(let i = arr.length - 1; i > 0; i--){
+const j = Math.floor(Math.random() * (i + 1));
+[arr[i], arr[j]] = [arr[j], arr[i]];
+}
+return arr;
+}
+
+/* GENERATE */
+function generateQueue(){
+
+let base = shuffle([...baseTasks]);
+let limit = baseTasks.length;
+
+if(TASK_COUNT > 0){
+limit = TASK_COUNT;
+}
+
+if(!RANDOM_MODE){
+queue = [...baseTasks];
+totalCount = queue.length;
+return;
+}
+
+if(limit <= base.length){
+queue = base.slice(0, limit);
+totalCount = queue.length;
+return;
+}
+
+queue = [...base];
+
+while(queue.length < limit){
+queue = queue.concat(shuffle([...baseTasks]));
+}
+
+queue = queue.slice(0, limit);
+totalCount = queue.length;
+
+}
+
+if(queue.length === 0){
+generateQueue();
+}
+
+/* SAVE */
+function save(){
+localStorage.setItem(storageKey, JSON.stringify({
+queue: queue,
+completed: completed,
+skipped: skipped,
+total: totalCount
+}));
+}
+
+/* PROGRESS */
+function progressBar(){
+let percent = totalCount ? (completed / totalCount) * 100 : 0;
+
+return `
+<div class="z-progress">${completed} / ${totalCount} wykonanych</div>
+<div class="z-bar"><div class="z-bar-fill" style="width:${percent}%"></div></div>
+`;
 }
 
 let currentTask = null;
 let selectedFile = null;
 
-function progress(){
-return `<p><strong>${completed} / ${tasks.length} wykonanych zadań</strong></p>`;
-}
+/* NEXT */
+function nextTask(){
 
-/* LOSOWANIE */
-
-function losuj(){
-
-if(used.length >= tasks.length){
+if(queue.length === 0){
 
 document.getElementById("zadania-app").innerHTML = `
-<h2>Gratulacje! 🎉</h2>
-<p>Wykonałeś <strong>${completed} / ${tasks.length}</strong> zadań</p>
+<div class="z-card">
+<h2>Koniec 🎉</h2>
+<p>Wykonałeś ${completed} z ${totalCount}</p>
+<p>Pominięte: ${skipped}</p>
+</div>
 `;
 
 localStorage.removeItem(storageKey);
 return;
 }
 
-let index;
+currentTask = queue.shift();
+save();
+renderTask();
+}
 
-do{
-index = Math.floor(Math.random()*tasks.length);
-}while(used.includes(index));
+function completeTask(){
+completed++;
+nextTask();
+}
 
-used.push(index);
-saveProgress();
+function skipTask(){
+skipped++;
+nextTask();
+}
 
-currentTask = tasks[index];
+/* RENDER */
+function renderTask(){
 
-let html = progress();
-html += "<h2>"+currentTask+"</h2>";
+let html = `<div class="z-card">`;
+html += progressBar();
+html += `<div class="z-task">${currentTask}</div>`;
 ';
 
-/* TRYB ZDJĘĆ */
+/* zdjęcia */
 
 if($photos){
 
 echo '
 html += `
-<input type="file" id="task-photo" accept="image/*" capture="environment"><br><br>
+<input type="file" id="task-photo" accept="image/*" capture="environment">
 
 <div id="preview"></div>
 
-<div id="loading" style="display:none;font-weight:bold;margin-top:10px;">
-Wysyłanie<span id="dots"></span>
-</div>
-
-<br>
-
-<button onclick="upload()">Potwierdź wykonanie</button>
+<button class="z-btn z-main" onclick="upload()">Potwierdź</button>
 `;
 ';
 
 }else{
 
 echo '
-html += `<button onclick="next()">Potwierdź wykonanie</button>`;
+html += `<button class="z-btn z-main" onclick="completeTask()">Wykonane</button>`;
 ';
 }
 
 echo '
 
-html += "<br><br><button onclick=\'losuj()\'>Zrezygnuj</button>";
+html += `<button class="z-btn z-skip" onclick="skipTask()">Pomiń</button>`;
+html += `</div>`;
 
 document.getElementById("zadania-app").innerHTML = html;
 
@@ -199,22 +339,8 @@ selectedFile = e.target.files[0];
 let reader = new FileReader();
 
 reader.onload = function(ev){
-
-document.getElementById("preview").innerHTML = `
-<div style="position:relative;display:inline-block;">
-<img src="${ev.target.result}" style="width:120px;height:120px;object-fit:cover;border:1px solid #ccc;">
-<button onclick="removePhoto()" style="
-position:absolute;
-top:0;
-right:0;
-background:red;
-color:white;
-border:none;
-cursor:pointer;
-">X</button>
-</div>
-`;
-
+document.getElementById("preview").innerHTML =
+`<img src="${ev.target.result}">`;
 };
 
 reader.readAsDataURL(selectedFile);
@@ -224,50 +350,13 @@ reader.readAsDataURL(selectedFile);
 
 }
 
-/* REMOVE PHOTO */
-
-function removePhoto(){
-selectedFile = null;
-document.getElementById("preview").innerHTML = "";
-}
-
-/* NEXT */
-
-function next(){
-completed++;
-saveProgress();
-losuj();
-}
-
-/* DOTS */
-
-let dotsInterval;
-
-function startDots(){
-let count = 0;
-dotsInterval = setInterval(()=>{
-count = (count + 1) % 4;
-document.getElementById("dots").innerHTML = ".".repeat(count);
-},500);
-}
-
-function stopDots(){
-clearInterval(dotsInterval);
-}
-
 /* UPLOAD */
-
 function upload(){
 
 if(!selectedFile){
 alert("Dodaj zdjęcie!");
 return;
 }
-
-let loading = document.getElementById("loading");
-
-loading.style.display = "block";
-startDots();
 
 let formData = new FormData();
 
@@ -280,29 +369,17 @@ fetch(window.location.href, {
 method: "POST",
 body: formData
 })
-.then(r => r.text())
-.then(() => {
-
-completed++;
-saveProgress();
-
-stopDots();
-loading.innerHTML = "Gotowe ✅";
-
-setTimeout(()=>{
-losuj();
-},800);
-
-});
+.then(()=>completeTask());
 
 }
 
 /* START */
-
 document.getElementById("zadania-app").innerHTML = `
+<div class="z-card">
 <p>'.esc_js($text).'</p>
-${progress()}
-<button onclick="losuj()">Losuj zadanie</button>
+${progressBar()}
+<button class="z-btn z-main" onclick="nextTask()">Start</button>
+</div>
 `;
 
 </script>
@@ -335,5 +412,4 @@ echo '</div>';
 
 }
 
-/* 🔥 NOWY SYSTEM */
 add_action('weselny_render_module_zadania','weselny_zadania_render');

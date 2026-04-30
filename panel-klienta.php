@@ -8,10 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Endpointy
  */
 function wp_weselny_panel_add_endpoints() {
-
     add_rewrite_endpoint( 'panel-wesela', EP_ROOT | EP_PAGES );
     add_rewrite_endpoint( 'funkcje-panelu', EP_ROOT | EP_PAGES );
-
 }
 add_action( 'init', 'wp_weselny_panel_add_endpoints' );
 
@@ -20,9 +18,7 @@ add_action( 'init', 'wp_weselny_panel_add_endpoints' );
  * Sprawdzenie produktu
  */
 function wp_weselny_panel_user_has_product( $product_id ) {
-
     if ( ! is_user_logged_in() ) return false;
-
     return wc_customer_bought_product('', get_current_user_id(), $product_id);
 }
 
@@ -73,24 +69,54 @@ function wp_weselny_panel_content() {
         $post = $wedding[0];
         $url = get_permalink($post->ID);
 
-        echo '<h2>Witaj w Panelu weselnym!</h2>';
+        $qr = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data='.urlencode($url);
 
-        echo '<p>Udostępnij gościom ten kod QR:</p>';
+        echo '<h2 style="text-align:center;">Witaj w Panelu weselnym!</h2>';
+        echo '<p style="text-align:center;">Udostępnij gościom ten kod QR:</p>';
 
-        echo '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='.esc_url($url).'">';
+        echo '<div style="text-align:center;margin-bottom:20px;">';
 
-        echo '<p><a href="'.esc_url($url).'" target="_blank">'.$url.'</a></p>';
+        echo '<img id="weselny-qr" crossorigin="anonymous" src="'.$qr.'" style="max-width:220px;"><br><br>';
+
+        echo '<button type="button" id="download-qr">Pobierz grafikę QR</button>';
+
+        echo '</div>';
 
         echo '<hr>';
 
         echo '<h3>Funkcje panelu</h3>';
 
-        echo '<div class="weselny-tile">';
-        echo '<a href="'.wc_get_account_endpoint_url('funkcje-panelu').'">Funkcje panelu</a>';
-        echo '</div>';
+        echo '<div class="weselny-tile"><a href="'.wc_get_account_endpoint_url('funkcje-panelu').'">Funkcje panelu</a></div>';
+        echo '<div class="weselny-tile"><a href="'.wc_get_account_endpoint_url('panel-wesela').'?wyglad=1">Wygląd panelu</a></div>';
+        echo '<div class="weselny-tile"><a href="'.wc_get_account_endpoint_url('panel-wesela').'?custom=1">Własne sekcje</a></div>';
+
+        remove_action('weselny_panel_tiles','weselny_wyglad_tile');
+        remove_action('weselny_panel_tiles','weselny_custom_tile');
 
         do_action('weselny_panel_tiles');
 
+        echo '<script>
+        document.getElementById("download-qr").addEventListener("click", function(){
+
+            const img = document.getElementById("weselny-qr");
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob(function(blob){
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "qr-wesele.png";
+                link.click();
+            }, "image/png");
+
+        });
+        </script>';
     }
 }
 add_action('woocommerce_account_panel-wesela_endpoint','wp_weselny_panel_content');
@@ -114,7 +140,7 @@ $post_id = $wedding ? $wedding[0]->ID : 0;
 
 
 /* =========================
-   MODUŁY (DEFAULT)
+   MODUŁY
 ========================= */
 
 $base_modules = [
@@ -127,47 +153,20 @@ $base_modules = [
 'zdjecia' => ['label'=>'Zdjęcia','meta'=>'weselny_modul_zdjecia'],
 ];
 
-
-/* =========================
-   LABELKI
-========================= */
-
 $custom_labels = get_post_meta($post_id,'weselny_module_labels',true);
 if(!is_array($custom_labels)) $custom_labels = [];
 
-
-/* =========================
-   AKTYWNE MODUŁY
-========================= */
-
 $modules = [];
 
+/* 🔥 WSZYSTKIE moduły (nawet wyłączone!) */
 foreach($base_modules as $key=>$mod){
-
-    if(get_user_meta($user_id,$mod['meta'],true)){
-
-        $modules[$key] = !empty($custom_labels[$key]) 
-            ? $custom_labels[$key] 
-            : $mod['label'];
-    }
+    $modules[$key] = $custom_labels[$key] ?? $mod['label'];
 }
 
-
-/* =========================
-   CUSTOM SEKCJE
-========================= */
-
 $custom = get_post_meta($post_id,'weselny_custom_modules',true);
-
-if(!empty($custom) && is_array($custom)){
+if(!empty($custom)){
     foreach($custom as $i=>$c){
-
-        $default = !empty($c['title']) ? $c['title'] : 'Sekcja '.($i+1);
-        $key = 'custom_'.$i;
-
-        $modules[$key] = !empty($custom_labels[$key])
-            ? $custom_labels[$key]
-            : '🧩 '.$default;
+        $modules['custom_'.$i] = $custom_labels['custom_'.$i] ?? ($c['title'] ?? 'Sekcja');
     }
 }
 
@@ -177,105 +176,71 @@ if(!empty($custom) && is_array($custom)){
 ========================= */
 
 $order = get_post_meta($post_id,'weselny_module_order',true);
-
-if(!is_array($order)){
-    $order = array_keys($modules);
-}
+if(!is_array($order)) $order = array_keys($modules);
 
 $order = array_values(array_intersect($order, array_keys($modules)));
-
-foreach(array_keys($modules) as $key){
-    if(!in_array($key,$order)){
-        $order[] = $key;
-    }
+foreach(array_keys($modules) as $k){
+    if(!in_array($k,$order)) $order[] = $k;
 }
 
 
 /* =========================
-   ZAPIS + REDIRECT
+   ZAPIS
 ========================= */
 
 if(isset($_POST['module_order'])){
 
-    $clean_order = array_map('sanitize_text_field', $_POST['module_order']);
-    update_post_meta($post_id,'weselny_module_order',$clean_order);
+    update_post_meta($post_id,'weselny_module_order', $_POST['module_order']);
 
     $labels = [];
-
     if(isset($_POST['module_label'])){
-        foreach($_POST['module_label'] as $key=>$val){
-
-            $val = trim($val);
-
-            if($val !== ''){
-                $labels[$key] = sanitize_text_field($val);
+        foreach($_POST['module_label'] as $k=>$v){
+            if(trim($v) !== ''){
+                $labels[$k] = sanitize_text_field($v);
             }
         }
     }
 
     update_post_meta($post_id,'weselny_module_labels',$labels);
 
-    /* 🔥 PRG FIX */
-    wp_redirect( add_query_arg('saved','1', wc_get_account_endpoint_url('funkcje-panelu')) );
+    wp_redirect( wc_get_account_endpoint_url('funkcje-panelu') );
     exit;
 }
 
 
 /* =========================
-   UI
+   UI – SORTOWANIE
 ========================= */
 
 echo '<h2>Kolejność modułów</h2>';
-
-echo '<div id="weselny-save-msg" style="display:none;">Zapisano</div>';
-
 echo '<p><a href="'.wc_get_account_endpoint_url('panel-wesela').'">← Powrót</a></p>';
 
-echo '<form method="post">';
-
+echo '<form method="post" id="modules-form">';
 echo '<div id="sortable">';
 
 foreach($order as $key){
 
-    /* 🔥 DEFAULT LABEL */
-    if(isset($base_modules[$key])){
-        $default_label = $base_modules[$key]['label'];
-    } elseif(strpos($key,'custom_') === 0){
-        $i = intval(str_replace('custom_','',$key));
-        $default_label = !empty($custom[$i]['title']) ? $custom[$i]['title'] : 'Sekcja '.($i+1);
-    } else {
-        $default_label = '';
-    }
-
-    $value = $custom_labels[$key] ?? '';
-
-    echo '<div class="drag-item" draggable="true" data-key="'.$key.'">
-
-    <span class="drag-handle">☰</span>
-
-    <input 
-        type="text" 
-        name="module_label['.$key.']" 
-        value="'.esc_attr($value).'" 
-        placeholder="'.esc_attr($default_label).'" 
-        class="module-label-input"
-    >
-
-    <input type="hidden" name="module_order[]" value="'.$key.'">
-
+    echo '<div class="drag-item" draggable="true">
+        ☰ 
+        <input type="text" name="module_label['.$key.']" value="'.esc_attr($custom_labels[$key] ?? '').'" placeholder="'.esc_attr($modules[$key]).'">
+        <input type="hidden" class="order-input" value="'.$key.'">
     </div>';
 }
 
 echo '</div>';
-
-echo '<br><button>Zapisz</button>';
+echo '<br><button>Zapisz kolejność</button>';
 echo '</form>';
+
+
+/* =========================
+   🔥 CHECKBOXY WRACAJĄ
+========================= */
 
 echo '<hr>';
 
 echo '<form method="post">';
 do_action('weselny_panel_features');
-echo '<br><button name="weselny_features_save">Zapisz</button>';
+echo '<br><button name="weselny_features_save">Zapisz funkcje</button>';
 echo '</form>';
 
 
@@ -283,77 +248,67 @@ echo '</form>';
    JS DRAG
 ========================= */
 
-echo '
-<script>
-
-let dragged = null;
-
-document.querySelectorAll(".drag-item").forEach(item => {
-
-item.addEventListener("dragstart", () => {
-dragged = item;
-item.classList.add("dragging");
-});
-
-item.addEventListener("dragend", () => {
-item.classList.remove("dragging");
-});
-
-});
-
-const container = document.getElementById("sortable");
-
-container.addEventListener("dragover", e => {
-e.preventDefault();
-
-const afterElement = getDragAfterElement(container, e.clientY);
-const dragging = document.querySelector(".dragging");
-
-if(!afterElement){
-container.appendChild(dragging);
-}else{
-container.insertBefore(dragging, afterElement);
-}
-
-});
-
-function getDragAfterElement(container, y){
-
-const elements = [...container.querySelectorAll(".drag-item:not(.dragging)")];
-
-return elements.reduce((closest, child) => {
-
-const box = child.getBoundingClientRect();
-const offset = y - box.top - box.height / 2;
-
-if(offset < 0 && offset > closest.offset){
-return { offset: offset, element: child };
-}else{
-return closest;
-}
-
-}, { offset: Number.NEGATIVE_INFINITY }).element;
-
-}
-
-</script>
-';
-
-
-/* =========================
-   KOMUNIKAT
-========================= */
-
-if(isset($_GET['saved'])){
 echo '<script>
-document.addEventListener("DOMContentLoaded",()=>{
-let msg=document.getElementById("weselny-save-msg");
-msg.style.display="block";
-setTimeout(()=>msg.style.display="none",2000);
+
+let dragged;
+
+document.querySelectorAll(".drag-item").forEach(el=>{
+
+    el.addEventListener("dragstart", ()=>{
+        dragged = el;
+        el.style.opacity = "0.5";
+    });
+
+    el.addEventListener("dragend", ()=>{
+        el.style.opacity = "1";
+    });
+
 });
+
+document.getElementById("sortable").addEventListener("dragover", e=>{
+    e.preventDefault();
+
+    const items = [...document.querySelectorAll(".drag-item:not(.dragging)")];
+
+    let closest = null;
+    let offset = Number.NEGATIVE_INFINITY;
+
+    items.forEach(el=>{
+        const box = el.getBoundingClientRect();
+        const diff = e.clientY - box.top - box.height/2;
+
+        if(diff < 0 && diff > offset){
+            offset = diff;
+            closest = el;
+        }
+    });
+
+    if(!closest){
+        e.currentTarget.appendChild(dragged);
+    } else {
+        e.currentTarget.insertBefore(dragged, closest);
+    }
+});
+
+
+document.getElementById("modules-form").addEventListener("submit", function(){
+
+    document.querySelectorAll("input[name=\'module_order[]\']").forEach(el=>el.remove());
+
+    document.querySelectorAll(".drag-item").forEach(el=>{
+        let key = el.querySelector(".order-input").value;
+
+        let input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "module_order[]";
+        input.value = key;
+
+        this.appendChild(input);
+    });
+
+});
+
 </script>';
-}
 
 }
-
 add_action('woocommerce_account_funkcje-panelu_endpoint','wp_weselny_panel_features_page');

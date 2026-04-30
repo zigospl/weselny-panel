@@ -6,77 +6,150 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function weselny_stoly_render($post_id){
 
-/* właściciel */
 $user_id = get_post_meta($post_id,'user_id',true);
 if(!$user_id) return;
 
-/* czy włączony */
 $enabled = get_user_meta($user_id,'weselny_modul_stoly',true);
 if(!$enabled) return;
 
-/* dane */
 $data = get_post_meta($post_id,'weselny_stoly',true);
 if(!$data) return;
 
-/* 🔥 ustawienie wyszukiwarki */
 $search_enabled = get_post_meta($post_id,'weselny_stoly_search',true);
 
 
 /* =========================
-   WIDOK STOŁÓW
+   WIDOK
 ========================= */
 
 if(isset($_GET['stoly'])){
 
-echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót do panelu</a></p>';
+echo '
+<style>
+
+.stoly-container{
+max-width:600px;
+margin:0 auto;
+font-family:Arial;
+}
+
+/* SEARCH */
+.stoly-search{
+position:sticky;
+top:0;
+background:#fff;
+padding-bottom:10px;
+z-index:10;
+}
+
+.stoly-search input{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid #ddd;
+font-size:14px;
+}
+
+/* TABLE CARD */
+.stoly-card{
+background:#fff;
+border-radius:14px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+margin-bottom:15px;
+overflow:hidden;
+}
+
+/* HEADER */
+.stoly-header{
+padding:14px;
+font-weight:600;
+font-size:16px;
+border-bottom:1px solid #eee;
+background:#fafafa;
+}
+
+/* GUEST */
+.guest-item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px 14px;
+border-bottom:1px solid #f1f1f1;
+font-size:14px;
+}
+
+.guest-item:last-child{
+border-bottom:none;
+}
+
+.guest-name{
+font-weight:500;
+}
+
+.guest-seat{
+font-size:12px;
+color:#666;
+background:#f2f2f2;
+padding:4px 8px;
+border-radius:6px;
+}
+
+/* HIGHLIGHT */
+.highlight{
+background:#ffe58a;
+}
+
+</style>
+';
+
+echo '<div class="stoly-container">';
+
+echo '<p><a href="'.get_permalink().'" class="weselny-back">← Powrót</a></p>';
 echo '<h2>Rozstaw stołów</h2>';
 
 
-/* 🔥 WYSZUKIWARKA */
+/* SEARCH */
+
 if($search_enabled){
 echo '
-<input 
-type="text" 
-id="weselny-search" 
-placeholder="🔍 Wpisz imię lub nazwisko..." 
-style="width:100%;padding:10px;margin-bottom:20px;border:1px solid #ccc;border-radius:6px;"
->
+<div class="stoly-search">
+<input type="text" id="weselny-search" placeholder="🔍 Szukaj gościa...">
+</div>
 ';
 }
 
 
+/* TABLES */
+
 foreach($data as $table){
 
-echo '<div class="weselny-table">';
+echo '<div class="stoly-card">';
 
-echo '<h3>'.esc_html($table['title']).'</h3>';
+echo '<div class="stoly-header">'.esc_html($table['title']).'</div>';
 
 $hasSeat = false;
-
 foreach($table['guests'] as $g){
 if(!empty($g['seat'])) $hasSeat = true;
 }
 
-echo '<table border="1" cellpadding="6">';
-
 foreach($table['guests'] as $g){
 
-echo '<tr class="guest-row">';
-echo '<td class="guest-name">'.esc_html($g['name']).'</td>';
+echo '<div class="guest-item">';
+echo '<span class="guest-name">'.esc_html($g['name']).'</span>';
 
 if($hasSeat){
-echo '<td>'.esc_html($g['seat']).'</td>';
+echo '<span class="guest-seat">'.esc_html($g['seat']).'</span>';
 }
-
-echo '</tr>';
-
-}
-
-echo '</table><br>';
 
 echo '</div>';
+
 }
 
+echo '</div>';
+
+}
+
+echo '</div>';
 ?>
 
 <?php if($search_enabled): ?>
@@ -93,41 +166,38 @@ input.addEventListener("input", function(){
 
 let value = input.value.toLowerCase();
 
-document.querySelectorAll(".weselny-table").forEach(table => {
+document.querySelectorAll(".stoly-card").forEach(card => {
 
-let matchFound = false;
+let match = false;
 
-table.querySelectorAll(".guest-row").forEach(row => {
+card.querySelectorAll(".guest-item").forEach(row => {
 
 let nameEl = row.querySelector(".guest-name");
-let text = nameEl.innerText.toLowerCase();
+let original = nameEl.innerText;
+let text = original.toLowerCase();
 
 if(text.includes(value)){
 
 row.style.display = "";
+match = true;
 
-matchFound = true;
-
-/* 🔥 highlight */
-let original = nameEl.innerText;
+if(value){
 let regex = new RegExp(`(${value})`, "gi");
-nameEl.innerHTML = original.replace(regex, '<span style="background:yellow;">$1</span>');
-
-} else {
-
-row.style.display = "";
-nameEl.innerHTML = nameEl.innerText;
-
-if(value !== ""){
-row.style.display = "none";
+nameEl.innerHTML = original.replace(regex, '<span class="highlight">$1</span>');
+}else{
+nameEl.innerText = original;
 }
+
+}else{
+
+row.style.display = value ? "none" : "";
+nameEl.innerText = original;
 
 }
 
 });
 
-/* ukryj cały stół jeśli brak wyników */
-table.style.display = matchFound ? "" : "none";
+card.style.display = match || value === "" ? "" : "none";
 
 });
 
